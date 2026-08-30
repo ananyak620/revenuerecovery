@@ -1,0 +1,58 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ---- Virtual Environment ----
+venv/
+.venv/
+env/
+
+# ---- Environment Variables ----
+.env
+
+# ---- Database ----
+*.db
+*.sqlite3
+
+# ---- ML Artifacts ----
+mlruns/
+src/ml/models/*.joblib
+src/ml/models/*.pkl
+src/ml/models/*.json
+!src/ml/models/.gitkeep
+
+# ---- Data (generated) ----
+data/raw/*.csv
+data/processed/*.csv
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# ---- Jupyter ----
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+
+# ---- IDE ----
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- Docker ----
+docker-compose.override.yml
+
+# ---- Misc ----
+*.log
+.coverage
+htmlcov/
