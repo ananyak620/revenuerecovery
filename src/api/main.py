@@ -58,6 +58,10 @@ app.add_middleware(
 )
 
 
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
@@ -68,20 +72,44 @@ app.include_router(dashboard.router)
 app.include_router(webhooks.router)
 
 
-@app.get("/", tags=["root"])
-async def root():
-    return {
-        "app": settings.app_name,
-        "version": "0.1.0",
-        "docs": "/docs",
-        "status": "running",
-    }
-
-
 @app.get("/health", tags=["health"])
+@app.head("/health", tags=["health"])
 async def health_check():
     from src.api.schemas import HealthCheck
     return HealthCheck(
         environment=settings.app_env,
         llm_available=settings.has_gemini_key,
     )
+
+
+# Static and Frontend File Serving
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent
+INDEX_FILE = ROOT_DIR / "index.html"
+
+# Mount static asset folders if they exist
+for folder in ["pages", "components", "utils", "data"]:
+    folder_path = ROOT_DIR / folder
+    if folder_path.exists():
+        app.mount(f"/{folder}", StaticFiles(directory=str(folder_path)), name=folder)
+
+@app.get("/style.css")
+@app.head("/style.css")
+async def get_style():
+    return FileResponse(str(ROOT_DIR / "style.css"))
+
+@app.get("/app.js")
+@app.head("/app.js")
+async def get_app():
+    return FileResponse(str(ROOT_DIR / "app.js"))
+
+@app.get("/", tags=["root"])
+@app.head("/", tags=["root"])
+async def root():
+    if INDEX_FILE.exists():
+        return FileResponse(str(INDEX_FILE))
+    return {
+        "app": settings.app_name,
+        "version": "0.1.0",
+        "docs": "/docs",
+        "status": "running",
+    }

@@ -4,7 +4,9 @@
    ============================================ */
 
 const AIService = (() => {
-  const API_BASE = 'http://localhost:8000';
+  const API_BASE = (typeof window !== 'undefined' && window.location.hostname !== 'localhost')
+    ? window.location.origin
+    : (window.location.port === '3000' ? 'http://localhost:8000' : window.location.origin);
   let backendConnected = false;
   let activeLLMInfo = { active_provider: 'heuristic', configured_model: 'gemini-2.0-flash' };
 

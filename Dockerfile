@@ -14,8 +14,8 @@ RUN pip install --no-cache-dir . uvicorn httpx
 # Copy project code
 COPY . .
 
-# Expose ports: 8000 for FastAPI, 3000 for Frontend
-EXPOSE 8000 3000
+# Expose port (default 8000, or Render dynamic $PORT)
+EXPOSE 8000
 
-# Start script running backend and frontend concurrently
-CMD ["sh", "-c", "uvicorn src.api.main:app --host 0.0.0.0 --port 8000 & python -m http.server 3000"]
+# Start FastAPI which serves both API routes and frontend UI
+CMD ["sh", "-c", "uvicorn src.api.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
