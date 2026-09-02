@@ -1,27 +1,81 @@
 /* ============================================
    ReviveAI — Formatters
-   Currency, date, and number formatting utils
+   Multi-Currency (INR ₹ & USD $) & Formatting
    ============================================ */
 
 const Formatters = (() => {
-  function currency(value, compact = false) {
-    if (compact && Math.abs(value) >= 1000) {
-      const suffixes = ['', 'K', 'M', 'B'];
-      const tier = Math.floor(Math.log10(Math.abs(value)) / 3);
-      const suffix = suffixes[tier] || '';
-      const scaled = value / Math.pow(10, tier * 3);
-      return `$${scaled.toFixed(1)}${suffix}`;
+  // Default to INR (₹) for Razorpay & Indian Merchant ecosystem
+  let currentCurrency = localStorage.getItem('revive_currency') || 'INR';
+  const USD_TO_INR_RATE = 83.5;
+
+  function getCurrency() {
+    return currentCurrency;
+  }
+
+  function setCurrency(curr) {
+    if (curr === 'INR' || curr === 'USD') {
+      currentCurrency = curr;
+      localStorage.setItem('revive_currency', curr);
+      window.dispatchEvent(new CustomEvent('currencyChange', { detail: curr }));
     }
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value);
+  }
+
+  function getCurrencySymbol() {
+    return currentCurrency === 'INR' ? '₹' : '$';
+  }
+
+  function getRate() {
+    return currentCurrency === 'INR' ? USD_TO_INR_RATE : 1.0;
+  }
+
+  function toCurrent(valueInUSD) {
+    return Math.round(Number(valueInUSD) * getRate());
+  }
+
+  function currency(value, compact = false, isAlreadyInCurrent = false) {
+    const numericVal = Number(value) || 0;
+    const amount = isAlreadyInCurrent ? numericVal : numericVal * getRate();
+
+    if (currentCurrency === 'INR') {
+      if (compact) {
+        const absVal = Math.abs(amount);
+        if (absVal >= 10000000) {
+          return `₹${(amount / 10000000).toFixed(2)} Cr`;
+        }
+        if (absVal >= 100000) {
+          return `₹${(amount / 100000).toFixed(2)} L`;
+        }
+        if (absVal >= 1000) {
+          return `₹${(amount / 1000).toFixed(1)} K`;
+        }
+      }
+      return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(amount);
+    } else {
+      // USD formatting
+      if (compact && Math.abs(amount) >= 1000) {
+        const suffixes = ['', 'K', 'M', 'B'];
+        const tier = Math.floor(Math.log10(Math.abs(amount)) / 3);
+        const suffix = suffixes[tier] || '';
+        const scaled = amount / Math.pow(10, tier * 3);
+        return `$${scaled.toFixed(1)}${suffix}`;
+      }
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(amount);
+    }
   }
 
   function number(value) {
-    return new Intl.NumberFormat('en-US').format(value);
+    const locale = currentCurrency === 'INR' ? 'en-IN' : 'en-US';
+    return new Intl.NumberFormat(locale).format(value);
   }
 
   function percent(value, decimals = 1) {
@@ -37,11 +91,11 @@ const Formatters = (() => {
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
     if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
     if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString(currentCurrency === 'INR' ? 'en-IN' : 'en-US', { month: 'short', day: 'numeric' });
   }
 
   function shortDate(dateStr) {
-    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return new Date(dateStr).toLocaleDateString(currentCurrency === 'INR' ? 'en-IN' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
   function truncate(str, len = 30) {
@@ -78,6 +132,11 @@ const Formatters = (() => {
   }
 
   return {
+    getCurrency,
+    setCurrency,
+    getCurrencySymbol,
+    getRate,
+    toCurrent,
     currency,
     number,
     percent,

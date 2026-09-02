@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.config import settings
 from src.db.session import init_db
-from src.api.routes import transactions, recovery, dashboard
+from src.api.routes import transactions, recovery, dashboard, webhooks
 
 
 @asynccontextmanager
@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI):
     init_db()
     print("✓ Database initialized")
     print(f"✓ Environment: {settings.app_env}")
-    print(f"✓ Gemini API: {'configured' if settings.has_gemini_key else 'not configured (mock mode)'}")
+    print(f"✓ LLM Provider: {settings.llm_provider} (model: {settings.llm_model})")
     print(f"✓ API ready at http://{settings.api_host}:{settings.api_port}")
     print()
 
@@ -65,6 +65,7 @@ app.add_middleware(
 app.include_router(transactions.router)
 app.include_router(recovery.router)
 app.include_router(dashboard.router)
+app.include_router(webhooks.router)
 
 
 @app.get("/", tags=["root"])

@@ -48,9 +48,13 @@ const ChartComponent = (() => {
     if (!ctx) return null;
     if (instances[canvasId]) instances[canvasId].destroy();
 
+    const rate = typeof Formatters !== 'undefined' ? Formatters.getRate() : 1;
+    const sym = typeof Formatters !== 'undefined' ? Formatters.getCurrencySymbol() : '₹';
+    const isINR = typeof Formatters !== 'undefined' && Formatters.getCurrency() === 'INR';
+
     const labels = data.map(d => d.month);
-    const revenue = data.map(d => d.revenue);
-    const recovered = data.map(d => d.recovered);
+    const revenue = data.map(d => Math.round(d.revenue * rate));
+    const recovered = data.map(d => Math.round(d.recovered * rate));
 
     instances[canvasId] = new Chart(ctx, {
       type: 'line',
@@ -60,12 +64,12 @@ const ChartComponent = (() => {
           {
             label: 'Total Revenue',
             data: revenue,
-            borderColor: '#6366f1',
-            backgroundColor: 'rgba(99, 102, 241, 0.08)',
+            borderColor: '#0ea5e9',
+            backgroundColor: 'rgba(14, 165, 233, 0.08)',
             fill: true,
             tension: 0.4,
             borderWidth: 2,
-            pointBackgroundColor: '#6366f1',
+            pointBackgroundColor: '#0ea5e9',
             pointRadius: 3,
             pointHoverRadius: 6
           },
@@ -85,13 +89,29 @@ const ChartComponent = (() => {
       },
       options: {
         ...commonOptions,
+        plugins: {
+          ...commonOptions.plugins,
+          tooltip: {
+            ...commonOptions.plugins.tooltip,
+            callbacks: {
+              label: (item) => `${item.dataset.label}: ${sym}${item.parsed.y.toLocaleString(isINR ? 'en-IN' : 'en-US')}`
+            }
+          }
+        },
         scales: {
           ...commonOptions.scales,
           y: {
             ...commonOptions.scales.y,
             ticks: {
               ...commonOptions.scales.y.ticks,
-              callback: (v) => `$${(v / 1000).toFixed(0)}k`
+              callback: (v) => {
+                if (isINR) {
+                  if (v >= 10000000) return `₹${(v / 10000000).toFixed(1)}Cr`;
+                  if (v >= 100000) return `₹${(v / 100000).toFixed(0)}L`;
+                  return `₹${(v / 1000).toFixed(0)}k`;
+                }
+                return `$${(v / 1000).toFixed(0)}k`;
+              }
             }
           }
         }

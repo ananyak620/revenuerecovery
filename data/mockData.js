@@ -184,6 +184,7 @@ const MockData = (() => {
         html: template.text(company, amount),
         type: template.type,
         amount: template.amountType ? (template.amountType === 'positive' ? `+$${amount}` : `-$${amount}`) : null,
+        rawAmount: amount,
         amountType: template.amountType,
         time: minutesAgo < 60 ? `${minutesAgo}m ago` : `${Math.floor(minutesAgo / 60)}h ago`
       });
@@ -209,10 +210,10 @@ const MockData = (() => {
       elasticity: -1.4,
       priceRange: { min: 49, max: 149 },
       competitors: [
-        { name: 'CompetitorA', price: 69, features: 'Basic' },
-        { name: 'CompetitorB', price: 99, features: 'Full' },
-        { name: 'CompetitorC', price: 129, features: 'Premium' },
-        { name: 'CompetitorD', price: 59, features: 'Limited' }
+        { name: 'Standard Gateway Retries', type: 'Native Blind Retries', price: 0, recoveryRate: '28.4%', features: 'Fixed static schedule, zero ML intelligence' },
+        { name: 'Legacy Dunning Software', type: 'Baremetrics / Churn Buster', price: 89, recoveryRate: '38.2%', features: 'Email sequences only, no instant payment links' },
+        { name: 'Manual Finance Ops', type: 'Internal Billing Team', price: 149, recoveryRate: '44.0%', features: 'Slow phone/email outreach, high manual overhead' },
+        { name: 'Generic Rule Engine', type: 'Legacy Billing Rules', price: 59, recoveryRate: '32.1%', features: 'Static if-else rules without adaptive learning' }
       ],
       discountAnalysis: [
         { discount: '10%', conversions: '+12%', revenue: '+8%', retention: '+5%' },

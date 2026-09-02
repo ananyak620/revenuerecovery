@@ -8,7 +8,7 @@ Strict validation using Pydantic v2.
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 # ---------------------------------------------------------------------------
@@ -27,12 +27,11 @@ class CustomerBase(BaseModel):
 
 
 class CustomerResponse(CustomerBase):
+    model_config = ConfigDict(from_attributes=True)
+
     historical_recovery_rate: float = 0.5
     support_tickets_last_30d: int = 0
     days_since_last_login: int = 0
-
-    class Config:
-        from_attributes = True
 
 
 # ---------------------------------------------------------------------------
@@ -50,6 +49,8 @@ class TransactionBase(BaseModel):
 
 
 class TransactionResponse(TransactionBase):
+    model_config = ConfigDict(from_attributes=True)
+
     hour_of_day: int = 0
     day_of_week: int = 0
     is_weekend: bool = False
@@ -57,9 +58,6 @@ class TransactionResponse(TransactionBase):
     recovery_probability: Optional[float] = None
     expected_recovery_value: Optional[float] = None
     created_at: Optional[datetime] = None
-
-    class Config:
-        from_attributes = True
 
 
 class TransactionList(BaseModel):

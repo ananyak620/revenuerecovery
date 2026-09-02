@@ -18,13 +18,16 @@ env/
 
 # ---- Database ----
 *.db
+*.db-shm
+*.db-wal
 *.sqlite3
 
 # ---- ML Artifacts ----
 mlruns/
-src/ml/models/*.joblib
-src/ml/models/*.pkl
-src/ml/models/*.json
+# Retain trained production models for instant deployment
+!src/ml/models/*.joblib
+!src/ml/models/feature_columns.json
+!src/ml/models/feature_importance.csv
 !src/ml/models/.gitkeep
 
 # ---- Data (generated) ----

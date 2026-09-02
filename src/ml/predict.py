@@ -6,6 +6,7 @@ for individual transactions or batches.
 """
 
 import json
+import warnings
 import joblib
 from typing import Optional
 
@@ -45,15 +46,18 @@ class RecoveryPredictor:
             return
 
         # Try models in order of preference
-        if calibrated_path.exists():
-            self.model = joblib.load(calibrated_path)
-            self.model_name = "XGBoost (Calibrated)"
-        elif primary_path.exists():
-            self.model = joblib.load(primary_path)
-            self.model_name = "XGBoost"
-        elif baseline_path.exists():
-            self.model = joblib.load(baseline_path)
-            self.model_name = "Logistic Regression (Baseline)"
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=UserWarning)
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            if calibrated_path.exists():
+                self.model = joblib.load(calibrated_path)
+                self.model_name = "XGBoost (Calibrated)"
+            elif primary_path.exists():
+                self.model = joblib.load(primary_path)
+                self.model_name = "XGBoost"
+            elif baseline_path.exists():
+                self.model = joblib.load(baseline_path)
+                self.model_name = "Logistic Regression (Baseline)"
 
         if self.model:
             print(f"  ✓ Loaded model: {self.model_name}")

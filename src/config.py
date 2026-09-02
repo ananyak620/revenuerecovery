@@ -45,8 +45,17 @@ class Settings(BaseSettings):
     # --- Database ---
     database_url: str = "sqlite:///./reviveai.db"
 
-    # --- AI / GenAI ---
+    # --- AI / GenAI (Model-Agnostic) ---
+    # Provider options: "auto", "gemini", "openai_compatible", "ollama", "heuristic"
+    llm_provider: str = "auto"
+    llm_model: str = "gemini-2.0-flash"
+    llm_base_url: str = ""
     gemini_api_key: str = ""
+    openai_api_key: str = ""
+    ollama_base_url: str = "http://localhost:11434"
+
+    # --- Webhooks & Event Ingestion ---
+    webhook_secret: str = "reviveai_sec_demo_2026"
 
     # --- MLflow ---
     mlflow_tracking_uri: str = "sqlite:///mlflow.db"
@@ -69,6 +78,10 @@ class Settings(BaseSettings):
     @property
     def has_gemini_key(self) -> bool:
         return bool(self.gemini_api_key)
+
+    @property
+    def has_openai_key(self) -> bool:
+        return bool(self.openai_api_key)
 
 
 # Singleton settings instance

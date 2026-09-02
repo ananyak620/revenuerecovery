@@ -5,9 +5,10 @@ Endpoints for the recovery queue, predictions, and agent processing.
 These are the AI-powered endpoints.
 """
 
-from typing import cast
+from typing import Any, cast, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from src.db.session import get_db
@@ -189,3 +190,103 @@ async def process_transaction(request: AgentProcessRequest):
         final_action=str(result.get("final_action", "")),
         status=str(result.get("status", "completed")),
     )
+
+
+@router.get("/escalations")
+def get_escalated_queue(db: Session = Depends(get_db)):
+    """
+    Retrieve Human-in-the-Loop (HITL) review queue.
+    Lists high-value or policy-blocked transactions requiring human review.
+    """
+    from src.db.models import RecoveryDecision, Escalation, EscalationStatus
+
+    escalations = (
+        db.query(Escalation)
+        .filter(Escalation.status == EscalationStatus.OPEN)
+        .order_by(Escalation.created_at.desc())
+        .limit(20)
+        .all()
+    )
+
+    items = []
+    for esc in escalations:
+        txn = db.query(Transaction).filter(Transaction.id == esc.transaction_id).first()
+        items.append({
+            "escalation_id": esc.id,
+            "transaction_id": esc.transaction_id,
+            "customer_id": txn.customer_id if txn else "unknown",
+            "amount": float(txn.amount) if txn else 0.0,
+            "failure_reason": str(txn.failure_reason.value if txn and hasattr(txn.failure_reason, 'value') else (txn.failure_reason if txn else 'unknown')),
+            "reason": esc.reason,
+            "priority": str(esc.priority.value if hasattr(esc.priority, 'value') else esc.priority),
+            "created_at": str(esc.created_at),
+        })
+
+    return {
+        "count": len(items),
+        "escalations": items,
+    }
+
+
+class OverrideRequest(BaseModel):
+    transaction_id: str
+    action: str = Field(description="retry, notify_customer, block, resolve")
+    operator_reason: str = Field(description="Reason for manual override")
+
+
+@router.post("/override")
+async def manual_override(req: OverrideRequest, db: Session = Depends(get_db)):
+    """
+    Execute human-in-the-loop manual override for an escalated transaction.
+    """
+    from src.agent.tools import AgentTools
+
+    tools = AgentTools()
+    tools.log_decision({
+        "event": "manual_override",
+        "transaction_id": req.transaction_id,
+        "action": req.action,
+        "operator_reason": req.operator_reason,
+    })
+
+    if req.action == "retry":
+        res = tools.schedule_retry(req.transaction_id, delay_hours=1.0)
+    elif req.action == "notify_customer":
+        res = tools.send_notification("cust_hitl", f"Manual review resolution for payment {req.transaction_id}")
+    else:
+        res = {"status": "resolved", "action": req.action}
+
+    return {
+        "success": True,
+        "transaction_id": req.transaction_id,
+        "action_taken": req.action,
+        "operator_reason": req.operator_reason,
+        "details": res,
+    }
+
+
+@router.get("/llm-status")
+def get_llm_status():
+    """
+    Retrieve active Model-Agnostic LLM Provider telemetry.
+    """
+    from src.ai.diagnosis import get_diagnosis_service
+    svc = get_diagnosis_service()
+    return svc.get_provider_status()
+
+
+class LLMProviderSwitchRequest(BaseModel):
+    provider: str = Field(description="gemini, ollama, openai_compatible, heuristic, auto")
+    model: Optional[str] = Field(default=None, description="Optional model identifier")
+
+
+@router.post("/llm-provider")
+def set_llm_provider(req: LLMProviderSwitchRequest):
+    """
+    Dynamically switch active LLM reasoning engine between Gemini, Qwen/Gemma, or Heuristics.
+    """
+    from src.ai.llm_provider import get_llm_manager
+    mgr = get_llm_manager()
+    mgr.set_preferred_provider(req.provider, req.model)
+    return mgr.get_active_provider_info()
+
