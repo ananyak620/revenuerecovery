@@ -77,7 +77,7 @@ const App = (() => {
 
           <div class="header-live-badge">
             <span class="pulse-ring"></span>
-            <span class="badge-text">Razorpay Rail <strong>Active</strong></span>
+            <span class="badge-text">AI Agent <strong>Online</strong></span>
           </div>
         </div>
       </header>
