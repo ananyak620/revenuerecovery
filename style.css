@@ -150,7 +150,7 @@ img { max-width: 100%; display: block; }
 .page-container {
   position: relative;
   z-index: 1;
-  max-width: 1540px;
+  max-width: 100%;
   margin: 0 auto;
   width: 100%;
   animation: pageEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1);
