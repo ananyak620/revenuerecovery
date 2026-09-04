@@ -260,42 +260,160 @@ const AIService = (() => {
 
   // Simulated AI responses for revenue queries
   const responses = {
+    'retry_rate': {
+      text: `📈 **Smart Retry Performance & Success Rate Analysis**:
+
+• **Overall Smart Retry Success Rate**: **74.2%** (vs 31.4% industry benchmark for naive retries)
+• **Total Retries Scheduled**: 124 transactions across the past 30 days
+• **Successfully Recovered**: 92 payments ($21,450 / ₹17.9 Lakhs)
+• **Net Lift Over Baseline**: **+42.8% improvement**
+
+**Performance by AI Optimal Time Window:**
+• **1.5h – 3h Window (UPI & Network Glitches)**: 89.2% recovery
+• **6h – 12h Window (3DS Authentication Dropoffs)**: 71.5% recovery
+• **24h – 48h Window (Insufficient Funds / Payday Sync)**: 64.8% recovery
+
+**Safety Compliance**: 0 card-blocking penalties recorded under Policy POL-01 guardrails.`,
+      chart: null
+    },
+    'patterns': {
+      text: `🔍 **Failed Payment Telemetry & Root Cause Breakdown**:
+
+Analyzed **142 failed transaction events** over the last 30 days:
+
+**Top Failure Root Causes:**
+1. **Card Expired / Invalid (35%)**: Leading driver on recurring monthly SaaS billing
+2. **Insufficient Funds (28%)**: Heavily clustered between the 22nd and 28th of each month
+3. **3DS Authentication Timeouts (18%)**: Mobile checkout OTP abandonment
+4. **Bank Switch / Network Glitches (12%)**: Transient downtime during peak clearing hours
+5. **Fraud Security Flags (7%)**: Safely intercepted and blocked by Policy POL-02
+
+**Peak Failure Traffic Windows:**
+• 11:30 AM – 1:30 PM (High daytime UPI banking switch congestion)
+• 7:00 PM – 9:30 PM (Evening mobile payment rush)`,
+      chart: null
+    },
+    'strategy': {
+      text: `🚀 **Strategic Playbook for Maximizing Revenue Recovery**:
+
+To elevate your recovery rate from **74.2% to 85%+**, our AI agent recommends these 4 high-impact levers:
+
+1. **Multi-Rail Payment Fallbacks (+12% Recovery Lift)**
+   When recurring card debits fail twice, automatically send an instant Razorpay UPI AutoPay or Netbanking payment link.
+
+2. **1-Click WhatsApp Dunning for Expired Cards (62% Resolution)**
+   Traditional billing emails average a 14% open rate. Pre-authenticated WhatsApp card update links achieve 4.4x higher resolution within 24 hours.
+
+3. **AI Dynamic Cooldown Timing**
+   Never retry insufficient funds immediately. Delay retries by 24h to 48h to align with corporate payroll direct-deposit cycles.
+
+4. **Preemptive Expiry Warnings (POL-04)**
+   Notify subscribers 7 days prior to card expiration to replace details before billing fails.`,
+      chart: null
+    },
     'revenue': {
-      text: `Based on my analysis of your revenue telemetry:\n\n📊 **Total MRR**: $127,400\n📈 **Month-over-month growth**: +8.4%\n💰 **Recovered this month**: $32,500\n⚠️ **At-risk revenue**: $41,200\n\nYour recovery rate of 74.2% is well above industry standard (58%). The XGBoost-calibrated recovery agent has prevented $24,800 in churn with smart retry timing.\n\n**Recommendation**: Focus on the 12 critical-risk accounts representing $18,400 in MRR. Proactive outreach can recover 65%+ before next renewal.`,
+      text: `💰 **Revenue Recovery Summary (Current Month)**:
+
+• **Total Monthly Recurring Revenue (MRR)**: $127,400 (₹1.06 Cr)
+• **Total Lost Revenue Intercepted**: $41,200 (₹34.4 Lakhs)
+• **Successfully Recovered by Agent**: **$32,500 (₹27.1 Lakhs)**
+• **Net Month-Over-Month Lift**: **+8.4%**
+• **Estimated Annualized Run-Rate Saved**: **$390,000 (₹3.25 Cr)**
+
+Your current ROI multiplier is **9.4x** based on platform cost versus recovered cash.`,
       chart: null
     },
     'churn': {
-      text: `🔮 **Churn Prediction Analysis**:\n\nIdentified **5 high-risk accounts** with risk scores above 65/100.\n\n**Key indicators detected:**\n• 📉 Usage drop > 40% in 3 enterprise accounts\n• 🎫 Support tickets regarding billing in 2 accounts\n• 💳 Repeated card decline codes\n\n**Action Plan**: Trigger automated retention playbooks with 15% annual billing incentives to reduce churn probability from 72% down to 24%.`,
+      text: `🔮 **Customer Churn Risk & Retention Intelligence**:
+
+Identified **5 critical-risk accounts** with risk scores above 65/100 representing **$18,400 in MRR**:
+
+**Key Churn Indicators Detected:**
+• Product usage drop > 40% over 30 days (3 enterprise accounts)
+• Unresolved billing or card failure tickets (2 accounts)
+• Low NPS ratings (< 6.0) submitted post-incident
+
+**Recommended Action**: Dispatch automated retention workflows with a 15% annual commitment discount to lower churn probability from 72% to 24%.`,
       chart: null
     },
-    'payments': {
-      text: `💳 **Payment Recovery & Smart Retries**:\n\n**Failed Volume Ingested**: 12 transactions ($24,500)\n**Successfully Recovered**: 8 payments ($18,200)\n**Active Smart Retries**: 4 scheduled in optimal banking windows\n\n**Top Root Causes:**\n1. Card expired (35%)\n2. Insufficient funds (28%)\n3. Bank 3DS timeout (18%)\n4. Network failure (12%)\n\n**Model Insight**: Smart Retries timed after 4h have a 74% success rate compared to naive immediate retries (31%).`,
+    'engine': {
+      text: `⚡ **Active Model-Agnostic LLM Engine Status**:
+
+• **Active Reasoning Engine**: ${activeLLMInfo.active_provider.toUpperCase()} (${activeLLMInfo.configured_model})
+• **Average Inference Latency**: 118ms
+• **ML Calibration Layer**: XGBoost Calibrated Classifier (Isotonic Regression)
+• **Policy Engine Guardrails**: 100% Active (POL-01 through POL-06)
+• **FastAPI Backend**: ${backendConnected ? '🟢 Connected' : '🟡 Standalone Demo Mode'}
+• **MCP Server Protocol**: Ready for external agent orchestration via Claude Desktop & Cursor`,
       chart: null
     },
     'pricing': {
-      text: `💰 **Dynamic Pricing Optimization**:\n\nCurrent Starter tier: **$49/mo** → Recommended: **$59/mo**\nPro tier: **$99/mo** → Recommended: **$119/mo**\n\nElasticity modeling indicates a +14.2% MRR expansion with minimal churn sensitivity if coupled with grandfathering.`,
+      text: `💰 **Dynamic Pricing Optimization**:
+
+Current Starter tier: **$49/mo** → Recommended: **$59/mo**
+Pro tier: **$99/mo** → Recommended: **$119/mo**
+
+Elasticity modeling indicates a +14.2% MRR expansion with minimal churn sensitivity if coupled with grandfathering.`,
       chart: null
     },
     'default': {
-      text: `⚡ **ReviveAI Revenue Copilot Status**:\n\n• **Active Model Engine**: ${activeLLMInfo.active_provider.toUpperCase()} (${activeLLMInfo.configured_model})\n• **FastAPI Backend**: ${backendConnected ? '🟢 Connected (Port 8000)' : '🟡 Standalone Demo Mode'}\n• **Policy Engine Guardrails**: 100% Active (POL-01 through POL-06)\n• **MCP Server**: Ready for external agent connections\n\nAsk me anything about:\n• "Show me revenue recovered this month"\n• "Analyze failed payment telemetry"\n• "Which accounts are at risk of churn?"\n• "Run a smart retry simulation"`,
+      text: `⚡ **ReviveAI Revenue Copilot Ready**:
+
+I continuously monitor your revenue recovery, payment gateway webhooks, and customer churn risks.
+
+**Suggested queries to ask:**
+• "What is our smart retry success rate?"
+• "Analyze our failed payment patterns"
+• "What more better strategy we can use for more recovery?"
+• "How much revenue did we recover this month?"
+• "Which customers are most likely to churn?"`,
       chart: null
     }
   };
 
   function getResponse(query) {
-    const q = query.toLowerCase();
-    if (q.includes('revenue') || q.includes('mrr') || q.includes('money') || q.includes('earn')) {
+    const q = query.toLowerCase().trim();
+
+    // 1. Success rate / retry rate queries
+    if (q.includes('success rate') || q.includes('retry rate') || (q.includes('retry') && q.includes('rate')) || q.includes('how many retries succeed')) {
+      return responses.retry_rate;
+    }
+
+    // 2. Failed payment patterns / root causes
+    if (q.includes('pattern') || q.includes('root cause') || q.includes('why do payments fail') || (q.includes('fail') && q.includes('analyze')) || q.includes('telemetry breakdown')) {
+      return responses.patterns;
+    }
+
+    // 3. Better strategy / recovery improvement
+    if (q.includes('strategy') || q.includes('better') || q.includes('improve') || q.includes('more recovery') || q.includes('tactic') || q.includes('recommendation') || q.includes('playbook')) {
+      return responses.strategy;
+    }
+
+    // 4. Revenue & MRR
+    if (q.includes('how much') || q.includes('revenue') || q.includes('mrr') || q.includes('money') || q.includes('earned')) {
       return responses.revenue;
     }
-    if (q.includes('churn') || q.includes('risk') || q.includes('leave') || q.includes('cancel')) {
+
+    // 5. Churn & cancellation
+    if (q.includes('churn') || q.includes('at risk') || q.includes('cancel') || q.includes('leave') || q.includes('retention')) {
       return responses.churn;
     }
-    if (q.includes('payment') || q.includes('fail') || q.includes('decline') || q.includes('retry') || q.includes('recover')) {
-      return responses.payments;
+
+    // 6. Engine / LLM / Model status
+    if (q.includes('engine') || q.includes('llm') || q.includes('model') || q.includes('gemini') || q.includes('ollama')) {
+      return responses.engine;
     }
+
+    // 7. Pricing
     if (q.includes('price') || q.includes('pricing') || q.includes('cost') || q.includes('charge')) {
       return responses.pricing;
     }
+
+    // 8. General payment / retry / fallback
+    if (q.includes('payment') || q.includes('fail') || q.includes('decline') || q.includes('retry')) {
+      return responses.retry_rate;
+    }
+
     return responses.default;
   }
 
