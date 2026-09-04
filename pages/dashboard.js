@@ -7,6 +7,43 @@ const DashboardPage = (() => {
   let failedVolume = 1000000;
   let aov = 2500;
 
+  function calculateMetrics(vol, orderVal) {
+    const isINR = Formatters.getCurrency() === 'INR';
+    const sym = Formatters.getCurrencySymbol();
+    const rate = isINR ? 1 : (1 / 83.5);
+
+    const calcVol = vol * rate;
+    const calcAov = Math.max(10, orderVal * rate);
+    const monthlySaved = calcVol * 0.742;
+    const annualSaved = monthlySaved * 12;
+
+    // Accounts saved per month from involuntary churn
+    const totalFailedAccounts = Math.max(1, Math.round(calcVol / calcAov));
+    const recoveredAccounts = Math.max(1, Math.round(totalFailedAccounts * 0.742));
+
+    // Dynamic Churn Reduction % scaled with recovery volume
+    const churnPct = Math.min(34.5, Math.max(12.0, 13.5 + (vol / 5000000) * 18.5)).toFixed(1);
+
+    // Platform cost model: base SaaS tier + 1.8% success fee
+    const platformCost = (isINR ? 7500 : 90) + (monthlySaved * 0.018);
+    const netReturn = Math.max(0, monthlySaved - platformCost);
+    const roiMultiplier = (monthlySaved / Math.max(1, platformCost)).toFixed(1);
+
+    return {
+      isINR,
+      sym,
+      calcVol,
+      calcAov,
+      monthlySaved,
+      annualSaved,
+      recoveredAccounts,
+      churnPct,
+      netReturn,
+      roiMultiplier,
+      platformCost
+    };
+  }
+
   function updateROICalculations() {
     const volInput = document.getElementById('roi-vol-slider');
     const aovInput = document.getElementById('roi-aov-slider');
@@ -14,33 +51,31 @@ const DashboardPage = (() => {
     if (volInput) failedVolume = parseFloat(volInput.value);
     if (aovInput) aov = parseFloat(aovInput.value);
 
-    const isINR = Formatters.getCurrency() === 'INR';
-    const sym = Formatters.getCurrencySymbol();
-    const rate = isINR ? 1 : (1 / 83.5);
-
-    const calcVol = failedVolume * rate;
-    const calcAov = aov * rate;
-    const monthlySaved = calcVol * 0.742;
-    const annualSaved = monthlySaved * 12;
-    const estimatedExtra = calcVol * (0.742 - 0.28);
-    const estimatedCost = Math.max(isINR ? 5000 : 60, calcVol * 0.03);
-    const roiMultiplier = Math.max(8.5, (estimatedExtra / estimatedCost)).toFixed(1);
+    const m = calculateMetrics(failedVolume, aov);
 
     const volLabel = document.getElementById('roi-vol-val');
     const aovLabel = document.getElementById('roi-aov-val');
     const monthlySavedEl = document.getElementById('roi-monthly-saved');
     const annualSavedEl = document.getElementById('roi-annual-saved');
-    const roiMultEl = document.getElementById('roi-multiplier');
+    const churnRedEl = document.getElementById('roi-churn-reduction');
+    const churnSubEl = document.getElementById('roi-churn-sub');
+    const netReturnEl = document.getElementById('roi-net-return') || document.getElementById('roi-multiplier');
+    const netSubEl = document.getElementById('roi-net-sub');
 
     if (volLabel) {
-      volLabel.innerText = isINR 
+      volLabel.innerText = m.isINR 
         ? `₹${(failedVolume / 100000).toFixed(1)} Lakhs` 
-        : `$${Math.round(calcVol).toLocaleString()}`;
+        : `$${Math.round(m.calcVol).toLocaleString()}`;
     }
-    if (aovLabel) aovLabel.innerText = `${sym}${Math.round(calcAov).toLocaleString()}`;
-    if (monthlySavedEl) monthlySavedEl.innerText = `${sym}${Math.round(monthlySaved).toLocaleString()}`;
-    if (annualSavedEl) annualSavedEl.innerText = `${sym}${Math.round(annualSaved).toLocaleString()}`;
-    if (roiMultEl) roiMultEl.innerText = `${roiMultiplier}x ROI`;
+    if (aovLabel) aovLabel.innerText = `${m.sym}${Math.round(m.calcAov).toLocaleString()}`;
+    if (monthlySavedEl) monthlySavedEl.innerText = `${m.sym}${Math.round(m.monthlySaved).toLocaleString()}`;
+    if (annualSavedEl) annualSavedEl.innerText = `${m.sym}${Math.round(m.annualSaved).toLocaleString()}`;
+    
+    if (churnRedEl) churnRedEl.innerText = `-${m.churnPct}%`;
+    if (churnSubEl) churnSubEl.innerText = `${m.recoveredAccounts.toLocaleString()} accounts saved/mo`;
+
+    if (netReturnEl) netReturnEl.innerText = `${m.sym}${Math.round(m.netReturn).toLocaleString()}`;
+    if (netSubEl) netSubEl.innerText = `${m.roiMultiplier}x Net ROI vs fee`;
   }
 
   function render() {
@@ -136,8 +171,7 @@ const DashboardPage = (() => {
       </div>
     `).join('');
 
-    const monthlySavedInit = failedVolume * 0.742;
-    const annualSavedInit = monthlySavedInit * 12;
+    const mInit = calculateMetrics(failedVolume, aov);
 
     return `
       <div class="page-container">
@@ -201,7 +235,7 @@ const DashboardPage = (() => {
             <div class="roi-slider-group">
               <div class="roi-slider-label">
                 <span>Monthly Failed Payment Volume:</span>
-                <strong id="roi-vol-val">₹10.0 Lakhs</strong>
+                <strong id="roi-vol-val">${mInit.isINR ? `₹${(failedVolume / 100000).toFixed(1)} Lakhs` : `$${Math.round(mInit.calcVol).toLocaleString()}`}</strong>
               </div>
               <input
                 id="roi-vol-slider"
@@ -209,7 +243,7 @@ const DashboardPage = (() => {
                 min="100000"
                 max="5000000"
                 step="50000"
-                value="1000000"
+                value="${failedVolume}"
                 class="roi-range-input"
                 oninput="DashboardPage.onSliderChange()"
               />
@@ -223,7 +257,7 @@ const DashboardPage = (() => {
             <div class="roi-slider-group">
               <div class="roi-slider-label">
                 <span>Average Order Value (AOV):</span>
-                <strong id="roi-aov-val">₹2,500</strong>
+                <strong id="roi-aov-val">${mInit.sym}${Math.round(mInit.calcAov).toLocaleString()}</strong>
               </div>
               <input
                 id="roi-aov-slider"
@@ -231,7 +265,7 @@ const DashboardPage = (() => {
                 min="500"
                 max="25000"
                 step="500"
-                value="2500"
+                value="${aov}"
                 class="roi-range-input"
                 oninput="DashboardPage.onSliderChange()"
               />
@@ -246,26 +280,26 @@ const DashboardPage = (() => {
           <div class="roi-result-grid">
             <div class="roi-stat-box" style="border-color: rgba(16, 185, 129, 0.4);">
               <div style="font-size: 0.74rem; color: var(--text-muted); text-transform: uppercase;">Estimated Monthly Saved</div>
-              <div id="roi-monthly-saved" class="roi-num" style="color: #34d399;">₹${Math.round(monthlySavedInit).toLocaleString()}</div>
+              <div id="roi-monthly-saved" class="roi-num" style="color: #34d399;">${mInit.sym}${Math.round(mInit.monthlySaved).toLocaleString()}</div>
               <div style="font-size: 0.72rem; color: var(--color-success); margin-top: 2px;">+74.2% AI Recovery Rate</div>
             </div>
 
             <div class="roi-stat-box" style="border-color: rgba(99, 102, 241, 0.4);">
               <div style="font-size: 0.74rem; color: var(--text-muted); text-transform: uppercase;">Projected Annual Saved</div>
-              <div id="roi-annual-saved" class="roi-num" style="color: #a5b4fc;">₹${Math.round(annualSavedInit).toLocaleString()}</div>
+              <div id="roi-annual-saved" class="roi-num" style="color: #a5b4fc;">${mInit.sym}${Math.round(mInit.annualSaved).toLocaleString()}</div>
               <div style="font-size: 0.72rem; color: var(--color-primary-light); margin-top: 2px;">Compounded ARR Protection</div>
             </div>
 
             <div class="roi-stat-box" style="border-color: rgba(6, 182, 212, 0.4);">
               <div style="font-size: 0.74rem; color: var(--text-muted); text-transform: uppercase;">Churn Reduction</div>
-              <div class="roi-num" style="color: #38bdf8;">-18.4%</div>
-              <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">Involuntary Churn Prevented</div>
+              <div id="roi-churn-reduction" class="roi-num" style="color: #38bdf8;">-${mInit.churnPct}%</div>
+              <div id="roi-churn-sub" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">${mInit.recoveredAccounts.toLocaleString()} accounts saved/mo</div>
             </div>
 
             <div class="roi-stat-box" style="border-color: rgba(236, 72, 153, 0.4);">
               <div style="font-size: 0.74rem; color: var(--text-muted); text-transform: uppercase;">Net Merchant Return</div>
-              <div id="roi-multiplier" class="roi-num" style="color: #f472b6;">14.8x ROI</div>
-              <div style="font-size: 0.72rem; color: var(--color-success); margin-top: 2px;">vs ReviveAI Platform Fee</div>
+              <div id="roi-net-return" class="roi-num" style="color: #f472b6;">${mInit.sym}${Math.round(mInit.netReturn).toLocaleString()}</div>
+              <div id="roi-net-sub" style="font-size: 0.72rem; color: var(--color-success); margin-top: 2px;">${mInit.roiMultiplier}x Net ROI vs fee</div>
             </div>
           </div>
         </div>
