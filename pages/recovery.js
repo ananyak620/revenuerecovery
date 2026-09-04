@@ -404,49 +404,51 @@ const RecoveryPage = (() => {
             </div>
           </div>
         </div>
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Escalation ID</th>
-              <th>Transaction ID</th>
-              <th>Customer</th>
-              <th>Amount</th>
-              <th>Trigger Reason</th>
-              <th>Priority</th>
-              <th>Operator Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style="font-family: monospace; font-size: 0.78rem;">ESC-4901</td>
-              <td style="font-family: monospace; font-size: 0.78rem; color: #fb7185;">txn_esc_4901</td>
-              <td>cust_enterprise_88</td>
-              <td style="font-weight: 700;">₹45,000</td>
-              <td><span class="badge critical">POL-02 FRAUD_BLOCK</span> Automated retry strictly forbidden</td>
-              <td><span class="badge danger">Critical</span></td>
-              <td>
-                <div style="display: flex; gap: 6px;">
-                  <button class="btn btn-primary btn-sm" style="background: #10b981; border: none;" onclick="RecoveryPage.handleOverride('txn_esc_4901', 'retry')">Approve Override</button>
-                  <button class="btn btn-secondary btn-sm" onclick="RecoveryPage.handleOverride('txn_esc_4901', 'block')">Confirm Block</button>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td style="font-family: monospace; font-size: 0.78rem;">ESC-9102</td>
-              <td style="font-family: monospace; font-size: 0.78rem; color: #fb7185;">txn_esc_9102</td>
-              <td>cust_saas_41</td>
-              <td style="font-weight: 700;">₹32,000</td>
-              <td><span class="badge warning">POL-03 HIGH_AMOUNT_LOW_PROB</span> P(recovery) = 18% &lt; 30% threshold</td>
-              <td><span class="badge warning">High</span></td>
-              <td>
-                <div style="display: flex; gap: 6px;">
-                  <button class="btn btn-primary btn-sm" style="background: #10b981; border: none;" onclick="RecoveryPage.handleOverride('txn_esc_9102', 'notify_customer')">Send 1-Click Link</button>
-                  <button class="btn btn-secondary btn-sm" onclick="RecoveryPage.handleOverride('txn_esc_9102', 'resolve')">Resolve</button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="data-table-scroll">
+          <table class="data-table" style="min-width: 860px;">
+            <thead>
+              <tr>
+                <th>Escalation ID</th>
+                <th>Transaction ID</th>
+                <th>Customer</th>
+                <th>Amount</th>
+                <th>Trigger Reason</th>
+                <th>Priority</th>
+                <th>Operator Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-family: monospace; font-size: 0.78rem;">ESC-4901</td>
+                <td style="font-family: monospace; font-size: 0.78rem; color: #fb7185;">txn_esc_4901</td>
+                <td>cust_enterprise_88</td>
+                <td style="font-weight: 700;">₹45,000</td>
+                <td><span class="badge critical">POL-02 FRAUD_BLOCK</span> Automated retry strictly forbidden</td>
+                <td><span class="badge danger">Critical</span></td>
+                <td>
+                  <div style="display: flex; gap: 6px;">
+                    <button class="btn btn-primary btn-sm" style="background: #10b981; border: none;" onclick="RecoveryPage.handleOverride('txn_esc_4901', 'retry')">Approve Override</button>
+                    <button class="btn btn-secondary btn-sm" onclick="RecoveryPage.handleOverride('txn_esc_4901', 'block')">Confirm Block</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td style="font-family: monospace; font-size: 0.78rem;">ESC-9102</td>
+                <td style="font-family: monospace; font-size: 0.78rem; color: #fb7185;">txn_esc_9102</td>
+                <td>cust_saas_41</td>
+                <td style="font-weight: 700;">₹32,000</td>
+                <td><span class="badge warning">POL-03 HIGH_AMOUNT_LOW_PROB</span> P(recovery) = 18% &lt; 30% threshold</td>
+                <td><span class="badge warning">High</span></td>
+                <td>
+                  <div style="display: flex; gap: 6px;">
+                    <button class="btn btn-primary btn-sm" style="background: #10b981; border: none;" onclick="RecoveryPage.handleOverride('txn_esc_9102', 'notify_customer')">Send 1-Click Link</button>
+                    <button class="btn btn-secondary btn-sm" onclick="RecoveryPage.handleOverride('txn_esc_9102', 'resolve')">Resolve</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     `;
 

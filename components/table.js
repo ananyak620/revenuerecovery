@@ -16,7 +16,7 @@ const TableComponent = (() => {
           <h3>${title}</h3>
           <div class="table-actions">${headerActions}</div>
         </div>
-        <div style="overflow-x: auto;">
+        <div class="data-table-scroll">
           <table class="data-table">
             <thead><tr>${thead}</tr></thead>
             <tbody>${rows || '<tr><td colspan="' + columns.length + '" style="text-align: center; padding: 32px; color: var(--text-muted);">No records found</td></tr>'}</tbody>
