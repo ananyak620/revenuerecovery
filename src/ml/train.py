@@ -159,16 +159,17 @@ def train():
         # Calibrate probabilities
         print("\n  Calibrating probabilities...")
         cal_xgb_base = XGBClassifier(**{k: v for k, v in xgb_params.items() if k != "early_stopping_rounds"})
-        cal_xgb = CalibratedClassifierCV(cal_xgb_base, cv=3, method="isotonic")
+        cal_xgb = CalibratedClassifierCV(estimator=cal_xgb_base, cv=3, method="isotonic")
         cal_xgb.fit(X_train, y_train)
         cal_metrics = evaluate_model(cal_xgb, X_test, y_test, "XGBoost (Calibrated)")
 
         mlflow.log_params(xgb_params)
         mlflow.log_metrics(xgb_metrics)
+        mlflow.log_metrics({f"cal_{k}": v for k, v in cal_metrics.items()})
 
         # Feature importance
         importance = pd.Series(
-            xgb.feature_importances_, index=feature_columns[:len(xgb.feature_importances_)]
+            xgb.feature_importances_, index=feature_columns
         ).sort_values(ascending=False)
         print("\n  Top 10 Feature Importances:")
         for feat, imp in importance.head(10).items():
