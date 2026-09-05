@@ -4,8 +4,12 @@
    ============================================ */
 
 const DashboardPage = (() => {
-  let failedVolume = 1000000;
-  let aov = 2500;
+  function getFailedVolume() {
+    return MockData.getVolume ? MockData.getVolume() : 1000000;
+  }
+  function getAOV() {
+    return MockData.getAOV ? MockData.getAOV() : 2500;
+  }
 
   function calculateMetrics(vol, orderVal) {
     const isINR = Formatters.getCurrency() === 'INR';
@@ -48,10 +52,14 @@ const DashboardPage = (() => {
     const volInput = document.getElementById('roi-vol-slider');
     const aovInput = document.getElementById('roi-aov-slider');
 
-    if (volInput) failedVolume = parseFloat(volInput.value);
-    if (aovInput) aov = parseFloat(aovInput.value);
+    const vol = volInput ? parseFloat(volInput.value) : getFailedVolume();
+    const orderVal = aovInput ? parseFloat(aovInput.value) : getAOV();
 
-    const m = calculateMetrics(failedVolume, aov);
+    if (MockData.setVolume) {
+      MockData.setVolume(vol, orderVal);
+    }
+
+    const m = calculateMetrics(vol, orderVal);
 
     const volLabel = document.getElementById('roi-vol-val');
     const aovLabel = document.getElementById('roi-aov-val');
@@ -64,7 +72,7 @@ const DashboardPage = (() => {
 
     if (volLabel) {
       volLabel.innerText = m.isINR 
-        ? `₹${(failedVolume / 100000).toFixed(1)} Lakhs` 
+        ? `₹${(vol / 100000).toFixed(1)} Lakhs` 
         : `$${Math.round(m.calcVol).toLocaleString()}`;
     }
     if (aovLabel) aovLabel.innerText = `${m.sym}${Math.round(m.calcAov).toLocaleString()}`;
@@ -76,11 +84,36 @@ const DashboardPage = (() => {
 
     if (netReturnEl) netReturnEl.innerText = `${m.sym}${Math.round(m.netReturn).toLocaleString()}`;
     if (netSubEl) netSubEl.innerText = `${m.roiMultiplier}x Net ROI vs fee`;
+
+    // Dynamic Live Update for Top Stat Cards
+    const atRiskEl = document.getElementById('stat-val-at-risk');
+    if (atRiskEl) {
+      const atRiskAmount = MockData.getAtRiskMRR ? MockData.getAtRiskMRR('at_risk') : MockData.stats.atRiskRevenue;
+      atRiskEl.innerText = Formatters.currency(atRiskAmount);
+    }
+
+    const recEl = document.getElementById('stat-val-recovered');
+    if (recEl) {
+      recEl.innerText = `${m.sym}${Math.round(m.monthlySaved).toLocaleString()}`;
+    }
+
+    // Dynamic Live Update for Recent High-Risk Customer MRR cells in table
+    const mrrCells = document.querySelectorAll('.dash-cust-mrr');
+    if (mrrCells && mrrCells.length > 0) {
+      mrrCells.forEach((cell, idx) => {
+        if (MockData.customers[idx]) {
+          cell.innerText = Formatters.currency(MockData.customers[idx].mrr);
+        }
+      });
+    }
   }
 
   function render() {
+    const failedVolume = getFailedVolume();
+    const aov = getAOV();
     const stats = MockData.stats;
     const atRiskCount = MockData.customers.filter(c => c.riskScore >= 60).length;
+    const dynamicAtRiskRevenue = MockData.getAtRiskMRR ? MockData.getAtRiskMRR('at_risk') : stats.atRiskRevenue;
 
     const statsCards = [
       StatCard.render({
@@ -108,8 +141,8 @@ const DashboardPage = (() => {
       StatCard.render({
         id: 'at-risk',
         label: 'At-Risk Revenue',
-        value: Formatters.currency(stats.atRiskRevenue),
-        rawValue: stats.atRiskRevenue,
+        value: Formatters.currency(dynamicAtRiskRevenue),
+        rawValue: dynamicAtRiskRevenue,
         prefix: Formatters.getCurrencySymbol(),
         change: `${atRiskCount} critical accounts`,
         isPositive: false,
@@ -148,7 +181,7 @@ const DashboardPage = (() => {
           </td>
           <td>${c.company}</td>
           <td><span class="badge neutral">${c.plan}</span></td>
-          <td style="font-weight: 600; color: var(--text-primary);">${Formatters.currency(c.mrr)}</td>
+          <td style="font-weight: 600; color: var(--text-primary);" class="dash-cust-mrr">${Formatters.currency(c.mrr)}</td>
           <td><span class="risk-score ${c.riskLevel}">${c.riskScore}</span></td>
           <td style="font-size: 0.8rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${c.churnReason}</td>
           <td>

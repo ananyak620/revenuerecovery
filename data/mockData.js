@@ -47,7 +47,7 @@ const MockData = (() => {
       const firstName = pick(firstNames);
       const lastName = pick(lastNames);
       const plan = pick(plans);
-      const mrr = planPrices[plan] + rand(-5, 50);
+      const baseMrr = planPrices[plan] + rand(-5, 50);
       const riskScore = rand(5, 98);
       const riskLevel = riskScore >= 80 ? 'critical' : riskScore >= 60 ? 'high' : riskScore >= 35 ? 'medium' : 'low';
       const daysAgo = rand(1, 365);
@@ -60,7 +60,8 @@ const MockData = (() => {
         email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${pick(companies).toLowerCase().replace(/\s/g, '')}.com`,
         company: pick(companies),
         plan,
-        mrr,
+        baseMrr,
+        mrr: baseMrr,
         industry: pick(industries),
         riskScore,
         riskLevel,
@@ -245,6 +246,65 @@ const MockData = (() => {
   const dunningSequence = getDunningSequence();
   const pricingData = getPricingData();
 
+  // Dynamic Portfolio Volume & Amount Scaling
+  let portfolioVolume = 1000000; // Default ₹10 Lakhs
+  let portfolioAOV = 2500;       // Default ₹2,500
+
+  function getVolume() {
+    return portfolioVolume;
+  }
+
+  function getAOV() {
+    return portfolioAOV;
+  }
+
+  function getVolumeScale() {
+    return Math.max(0.1, portfolioVolume / 1000000);
+  }
+
+  function getAtRiskMRR(filter = 'at_risk') {
+    let list = customers;
+    if (filter === 'at_risk') {
+      list = customers.filter(c => c.riskScore >= 60);
+    } else if (filter !== 'all') {
+      list = customers.filter(c => c.riskLevel === filter);
+    }
+    return list.reduce((sum, c) => sum + (c.mrr || 0), 0);
+  }
+
+  function setVolume(vol, aovVal) {
+    if (vol !== undefined && vol !== null && !isNaN(vol)) portfolioVolume = Number(vol);
+    if (aovVal !== undefined && aovVal !== null && !isNaN(aovVal)) portfolioAOV = Number(aovVal);
+
+    const scale = getVolumeScale();
+    customers.forEach(c => {
+      c.mrr = Math.max(12, Math.round(c.baseMrr * scale));
+    });
+
+    failedPayments.forEach(p => {
+      const cust = customers.find(c => c.id === p.customerId);
+      if (cust) {
+        p.amount = cust.mrr;
+        if (p.recovered) p.recoveredAmount = cust.mrr;
+      }
+    });
+
+    stats.atRiskRevenue = getAtRiskMRR('at_risk');
+    stats.recoveredRevenue = Math.round(stats.atRiskRevenue * 0.742);
+
+    window.dispatchEvent(new CustomEvent('portfolioChange', {
+      detail: {
+        volume: portfolioVolume,
+        aov: portfolioAOV,
+        atRiskMRR: stats.atRiskRevenue,
+        scale: scale
+      }
+    }));
+  }
+
+  // Initial sync so stats reflect real customer MRR sums
+  setVolume(portfolioVolume, portfolioAOV);
+
   return {
     customers,
     failedPayments,
@@ -254,6 +314,11 @@ const MockData = (() => {
     dunningSequence,
     pricingData,
     generateFeedItems,
-    generateDashboardStats
+    generateDashboardStats,
+    getVolume,
+    getAOV,
+    getVolumeScale,
+    getAtRiskMRR,
+    setVolume
   };
 })();
