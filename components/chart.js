@@ -42,48 +42,45 @@ const ChartComponent = (() => {
     }
   };
 
-  function createRevenueChart(canvasId, data) {
+  function createRevenueChart(canvasId, data, initialScale) {
     if (typeof Chart === 'undefined') return null;
     const ctx = document.getElementById(canvasId);
     if (!ctx) return null;
     if (instances[canvasId]) instances[canvasId].destroy();
 
     const rate = typeof Formatters !== 'undefined' ? Formatters.getRate() : 1;
+    const currentScale = initialScale !== undefined ? initialScale : (typeof MockData !== 'undefined' && MockData.getVolumeScale ? MockData.getVolumeScale() : 1);
     const sym = typeof Formatters !== 'undefined' ? Formatters.getCurrencySymbol() : '₹';
     const isINR = typeof Formatters !== 'undefined' && Formatters.getCurrency() === 'INR';
 
     const labels = data.map(d => d.month);
-    const revenue = data.map(d => Math.round(d.revenue * rate));
-    const recovered = data.map(d => Math.round(d.recovered * rate));
+    const revenue = data.map(d => Math.round(d.revenue * rate * currentScale));
+    const recovered = data.map(d => Math.round(d.recovered * rate * currentScale));
 
     instances[canvasId] = new Chart(ctx, {
-      type: 'line',
+      type: 'bar',
       data: {
         labels,
         datasets: [
           {
             label: 'Total Revenue',
             data: revenue,
+            backgroundColor: 'rgba(14, 165, 233, 0.7)',
+            hoverBackgroundColor: 'rgba(14, 165, 233, 0.95)',
             borderColor: '#0ea5e9',
-            backgroundColor: 'rgba(14, 165, 233, 0.08)',
-            fill: true,
-            tension: 0.4,
-            borderWidth: 2,
-            pointBackgroundColor: '#0ea5e9',
-            pointRadius: 3,
-            pointHoverRadius: 6
+            borderWidth: 1.5,
+            borderRadius: 6,
+            borderSkipped: false
           },
           {
             label: 'Recovered Revenue',
             data: recovered,
+            backgroundColor: 'rgba(16, 185, 129, 0.85)',
+            hoverBackgroundColor: 'rgba(16, 185, 129, 1)',
             borderColor: '#10b981',
-            backgroundColor: 'rgba(16, 185, 129, 0.08)',
-            fill: true,
-            tension: 0.4,
-            borderWidth: 2,
-            pointBackgroundColor: '#10b981',
-            pointRadius: 3,
-            pointHoverRadius: 6
+            borderWidth: 1.5,
+            borderRadius: 6,
+            borderSkipped: false
           }
         ]
       },
@@ -119,6 +116,18 @@ const ChartComponent = (() => {
     });
 
     return instances[canvasId];
+  }
+
+  function updateRevenueChart(canvasId, scale = 1) {
+    const chart = instances[canvasId];
+    if (!chart || typeof MockData === 'undefined') return;
+
+    const rate = typeof Formatters !== 'undefined' ? Formatters.getRate() : 1;
+    const data = MockData.revenueData;
+
+    chart.data.datasets[0].data = data.map(d => Math.round(d.revenue * rate * scale));
+    chart.data.datasets[1].data = data.map(d => Math.round(d.recovered * rate * scale));
+    chart.update('none'); // Update immediately without animation stutter
   }
 
   function createDoughnutChart(canvasId, labels, data, colors) {
@@ -190,5 +199,10 @@ const ChartComponent = (() => {
     return instances[canvasId];
   }
 
-  return { createRevenueChart, createDoughnutChart, createBarChart };
+  return {
+    createRevenueChart,
+    updateRevenueChart,
+    createDoughnutChart,
+    createBarChart
+  };
 })();

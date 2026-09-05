@@ -118,6 +118,12 @@ const DashboardPage = (() => {
         }
       });
     }
+
+    // Dynamic Live Update for Revenue & Recovery Bar Graph
+    if (typeof ChartComponent !== 'undefined' && ChartComponent.updateRevenueChart) {
+      const currentScale = MockData.getVolumeScale ? MockData.getVolumeScale() : 1;
+      ChartComponent.updateRevenueChart('revenuePerformanceChart', currentScale);
+    }
   }
 
   function refreshMetrics() {
@@ -366,7 +372,7 @@ const DashboardPage = (() => {
 
   function init() {
     StatCard.animateAll();
-    ChartComponent.createRevenueChart('revenuePerformanceChart', MockData.revenueData);
+    ChartComponent.createRevenueChart('revenuePerformanceChart', MockData.revenueData, MockData.getVolumeScale ? MockData.getVolumeScale() : 1);
   }
 
   return {
