@@ -86,6 +86,11 @@ const DashboardPage = (() => {
     if (netSubEl) netSubEl.innerText = `${m.roiMultiplier}x Net ROI vs fee`;
 
     // Dynamic Live Update for Top Stat Cards
+    const mrrEl = document.getElementById('stat-val-mrr');
+    if (mrrEl) {
+      mrrEl.innerText = Formatters.currency(MockData.stats.mrr);
+    }
+
     const atRiskEl = document.getElementById('stat-val-at-risk');
     if (atRiskEl) {
       const atRiskAmount = MockData.getAtRiskMRR ? MockData.getAtRiskMRR('at_risk') : MockData.stats.atRiskRevenue;
@@ -97,6 +102,13 @@ const DashboardPage = (() => {
       recEl.innerText = `${m.sym}${Math.round(m.monthlySaved).toLocaleString()}`;
     }
 
+    const churnEl = document.getElementById('stat-val-churn-rate');
+    if (churnEl) {
+      const baseChurn = MockData.stats.baseChurnRate || 3.2;
+      const effectiveChurn = Math.max(1.1, (baseChurn * (1 - (parseFloat(m.churnPct) / 100)))).toFixed(1);
+      churnEl.innerText = `${effectiveChurn}%`;
+    }
+
     // Dynamic Live Update for Recent High-Risk Customer MRR cells in table
     const mrrCells = document.querySelectorAll('.dash-cust-mrr');
     if (mrrCells && mrrCells.length > 0) {
@@ -105,6 +117,14 @@ const DashboardPage = (() => {
           cell.innerText = Formatters.currency(MockData.customers[idx].mrr);
         }
       });
+    }
+  }
+
+  function refreshMetrics() {
+    updateROICalculations();
+    StatCard.animateAll();
+    if (typeof Toast !== 'undefined') {
+      Toast.success('✓ Real-time revenue metrics refreshed & synchronized!');
     }
   }
 
@@ -214,7 +234,7 @@ const DashboardPage = (() => {
             <p>Real-time ML churn detection, automated payment recovery, and smart retention.</p>
           </div>
           <div class="header-actions">
-            <button class="btn btn-secondary" onclick="Toast.info('Refreshing real-time metrics...')">↻ Refresh</button>
+            <button class="btn btn-secondary" onclick="DashboardPage.refreshMetrics()">↻ Refresh</button>
             <button class="btn btn-primary" onclick="App.navigate('recovery')">⚡ Open Payment Recovery</button>
           </div>
         </div>
@@ -353,5 +373,6 @@ const DashboardPage = (() => {
     render,
     init,
     onSliderChange: updateROICalculations,
+    refreshMetrics,
   };
 })();

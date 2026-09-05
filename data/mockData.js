@@ -272,6 +272,9 @@ const MockData = (() => {
     return list.reduce((sum, c) => sum + (c.mrr || 0), 0);
   }
 
+  stats.baseMrr = stats.mrr;
+  stats.baseChurnRate = stats.churnRate;
+
   function setVolume(vol, aovVal) {
     if (vol !== undefined && vol !== null && !isNaN(vol)) portfolioVolume = Number(vol);
     if (aovVal !== undefined && aovVal !== null && !isNaN(aovVal)) portfolioAOV = Number(aovVal);
@@ -289,6 +292,7 @@ const MockData = (() => {
       }
     });
 
+    stats.mrr = Math.round((stats.baseMrr || 110000) * scale);
     stats.atRiskRevenue = getAtRiskMRR('at_risk');
     stats.recoveredRevenue = Math.round(stats.atRiskRevenue * 0.742);
 
@@ -297,6 +301,7 @@ const MockData = (() => {
         volume: portfolioVolume,
         aov: portfolioAOV,
         atRiskMRR: stats.atRiskRevenue,
+        mrr: stats.mrr,
         scale: scale
       }
     }));
