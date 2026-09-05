@@ -7,7 +7,12 @@ const TableComponent = (() => {
   function render({ title, columns, data, rowRenderer, headerActions = '' }) {
     const tableId = `table-${Math.random().toString(36).substring(2, 8)}`;
 
-    const thead = columns.map(c => `<th>${c}</th>`).join('');
+    const thead = columns.map(c => {
+      let colClass = '';
+      if (c === 'Churn Indicator') colClass = ' class="col-churn-indicator"';
+      if (c === 'Retention Recommendation') colClass = ' class="col-retention-action"';
+      return `<th${colClass}>${c}</th>`;
+    }).join('');
     const rows = data.map(item => rowRenderer(item)).join('');
 
     return `

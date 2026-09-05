@@ -209,9 +209,19 @@ const ChurnPage = (() => {
               <span style="font-size: 0.7rem; color: var(--text-muted);">${c.featureAdoption}% adoption</span>
             </div>
           </td>
-          <td style="font-size: 0.8rem; max-width: 180px;">${c.churnReason}</td>
-          <td style="font-size: 0.8rem; color: var(--color-primary-light);">${c.retentionAction}</td>
-          <td>
+          <td class="col-churn-indicator">
+            <div class="churn-indicator-text">
+              <span class="indicator-icon">⚠️</span>
+              <span>${c.churnReason}</span>
+            </div>
+          </td>
+          <td class="col-retention-action">
+            <div class="retention-recommendation-badge">
+              <span class="action-icon">💡</span>
+              <span>${c.retentionAction}</span>
+            </div>
+          </td>
+          <td style="white-space: nowrap; text-align: center;">
             <button class="btn btn-primary btn-sm" onclick="Toast.success('Auto-outreach initiated for ${c.name}')">Retain</button>
           </td>
         </tr>

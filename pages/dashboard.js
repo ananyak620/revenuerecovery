@@ -209,7 +209,7 @@ const DashboardPage = (() => {
           <td><span class="badge neutral">${c.plan}</span></td>
           <td style="font-weight: 600; color: var(--text-primary);" class="dash-cust-mrr">${Formatters.currency(c.mrr)}</td>
           <td><span class="risk-score ${c.riskLevel}">${c.riskScore}</span></td>
-          <td style="font-size: 0.8rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${c.churnReason}</td>
+          <td style="font-size: 0.8rem; max-width: 240px; white-space: normal; line-height: 1.4; word-break: break-word;">${c.churnReason}</td>
           <td>
             <button class="btn btn-primary btn-sm" onclick="Toast.success('AI Retention playbook triggered for ${c.name}')">Save</button>
           </td>

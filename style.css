@@ -826,6 +826,62 @@ img { max-width: 100%; display: block; }
   white-space: nowrap;
 }
 
+/* Specific Table Column Widths & Anti-Overlap Wrapping */
+.data-table th.col-churn-indicator,
+.data-table td.col-churn-indicator {
+  min-width: 220px !important;
+  max-width: 280px !important;
+  width: 240px;
+  white-space: normal !important;
+  line-height: 1.45;
+  word-break: break-word;
+  vertical-align: middle;
+}
+
+.data-table th.col-retention-action,
+.data-table td.col-retention-action {
+  min-width: 240px !important;
+  max-width: 320px !important;
+  width: 260px;
+  white-space: normal !important;
+  line-height: 1.45;
+  word-break: break-word;
+  vertical-align: middle;
+}
+
+.churn-indicator-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.churn-indicator-text .indicator-icon {
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.retention-recommendation-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.8rem;
+  color: #38bdf8;
+  background: rgba(14, 165, 233, 0.08);
+  border: 1px solid rgba(14, 165, 233, 0.22);
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.retention-recommendation-badge .action-icon {
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
 /* ---- Badges ---- */
 .badge {
   display: inline-flex;
