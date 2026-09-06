@@ -7,6 +7,7 @@
 
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![Render Live](https://img.shields.io/badge/Render-Live_Production-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://reviveai-8mbw.onrender.com/)
 [![XGBoost](https://img.shields.io/badge/XGBoost-Calibrated_ML-FF6600?style=for-the-badge)](https://xgboost.readthedocs.io)
 [![Razorpay Policy](https://img.shields.io/badge/Razorpay-Policy_Standard_2026-0C2340?style=for-the-badge&logo=razorpay)](docs/policies/razorpay_payment_recovery_policy.md)
 [![RBI & NPCI Compliant](https://img.shields.io/badge/Compliance-RBI_e--Mandate_|_NPCI-10B981?style=for-the-badge)](#-the-safety-net-6-hard-stopping-rules)
@@ -28,7 +29,7 @@ Traditional payment gateways blindly hammer bank servers until penalty fees pile
 
 ---
 
-[🚀 Quick Start](#-quick-start-in-60-seconds) • [🧪 Live API Test](#-try-it-live) • [📈 Batch Benchmark](#-the-proof-measured-batch-recovery) • [🛡️ Guardrail Rules](#-the-safety-net-6-hard-stopping-rules) • [🏗️ Architecture](#-how-it-works)
+[🌐 Live Production App](https://reviveai-8mbw.onrender.com/) • [📑 Live Swagger API Docs](https://reviveai-8mbw.onrender.com/docs) • [🧪 Live Simulation Test](#-try-it-live) • [📈 Batch Benchmark](#-the-proof-measured-batch-recovery) • [🛡️ Guardrail Rules](#-the-safety-net-6-hard-stopping-rules) • [🚀 Local Quick Start](#-quick-start-in-60-seconds)
 
 </div>
 
@@ -158,7 +159,7 @@ When an incident triggers a safety violation or involves high-value enterprise r
 3. **One-Click Override**: Once the customer is contacted, operators execute an audited override:
 
 ```bash
-curl -X POST "http://localhost:8000/api/recovery/override" \
+curl -X POST "https://reviveai-8mbw.onrender.com/api/recovery/override" \
   -H "Content-Type: application/json" \
   -d '{
     "transaction_id": "txn_ent_8819",
@@ -251,7 +252,20 @@ ReviveAI immutably logs 100% of decisions in the database with cryptographic tra
 
 ---
 
-## 🚀 Quick Start in 60 Seconds
+## 🌐 Live Cloud Deployment (Render)
+
+ReviveAI is deployed in production on Render with live automated container builds:
+
+| Resource | Live Production Link | Description |
+|---|---|---|
+| **Live Web App & Dashboard** | [**reviveai-8mbw.onrender.com**](https://reviveai-8mbw.onrender.com/) | Real-time merchant recovery interface |
+| **Interactive OpenAPI Swagger** | [**reviveai-8mbw.onrender.com/docs**](https://reviveai-8mbw.onrender.com/docs) | Test every endpoint directly in browser |
+| **Health Check & LLM Status** | [**reviveai-8mbw.onrender.com/health**](https://reviveai-8mbw.onrender.com/health) | `{"status":"ok","database_connected":true}` |
+| **Razorpay Ingestion Webhook** | `https://reviveai-8mbw.onrender.com/api/webhooks/razorpay` | Production endpoint for payment events |
+
+---
+
+## 💻 Local Quick Start (Development)
 
 ### 1. Clone & Install
 ```bash
@@ -277,11 +291,12 @@ python -m src.ml.train
 python -m src.db.seed
 ```
 
-### 3. Launch the Server
+### 3. Launch Local Server
 ```bash
 uvicorn src.api.main:app --reload --port 8000
 ```
-Interactive Swagger Docs: **[http://localhost:8000/docs](http://localhost:8000/docs)**
+- Local UI: **[http://localhost:8000](http://localhost:8000)**
+- Local Swagger Docs: **[http://localhost:8000/docs](http://localhost:8000/docs)**
 
 ---
 
@@ -289,10 +304,10 @@ Interactive Swagger Docs: **[http://localhost:8000/docs](http://localhost:8000/d
 
 ### 1. Simulate an Autonomous Recovery in 1 Click
 
-Simulate a failed ₹4,999 UPI payment and watch the entire ML $\to$ LLM $\to$ Policy Engine $\to$ Action loop execute live:
+Simulate a failed ₹4,999 UPI payment and watch the entire ML $\to$ LLM $\to$ Policy Engine $\to$ Action loop execute live on the cloud server:
 
 ```bash
-curl -X POST "http://localhost:8000/api/webhooks/simulate" \
+curl -X POST "https://reviveai-8mbw.onrender.com/api/webhooks/simulate" \
   -H "Content-Type: application/json" \
   -d '{
     "amount": 4999.0,
@@ -301,6 +316,7 @@ curl -X POST "http://localhost:8000/api/webhooks/simulate" \
     "auto_execute": true
   }'
 ```
+*(You can also test against your local server by replacing the URL with `http://localhost:8000/api/webhooks/simulate`)*
 
 **Live Response:**
 ```json
