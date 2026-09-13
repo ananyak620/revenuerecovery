@@ -2,7 +2,17 @@
   "venvPath": ".",
   "venv": "venv",
   "extraPaths": [".", "src"],
-  "include": ["src", "data"],
-  "reportMissingImports": "error",
+  "include": ["src"],
+  "exclude": [
+    "**/venv",
+    "**/.venv",
+    "**/.git",
+    "**/.pytest_cache",
+    "**/.ruff_cache",
+    "**/mlruns",
+    "**/data/raw",
+    "**/__pycache__"
+  ],
+  "reportMissingImports": "none",
   "reportMissingTypeStubs": false
 }

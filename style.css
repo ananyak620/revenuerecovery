@@ -80,10 +80,14 @@ html {
 
 body {
   font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background-color: var(--bg-primary);
+  background-color: #060814;
   background-image: 
-    radial-gradient(ellipse 70% 40% at 50% -10%, rgba(14, 165, 233, 0.14) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 30% at 90% 15%, rgba(16, 185, 129, 0.08) 0%, transparent 60%);
+    radial-gradient(circle at 15% 15%, rgba(147, 51, 234, 0.22) 0%, transparent 45%),
+    radial-gradient(circle at 85% 25%, rgba(14, 165, 233, 0.20) 0%, transparent 50%),
+    radial-gradient(circle at 50% 60%, rgba(99, 102, 241, 0.16) 0%, transparent 55%),
+    radial-gradient(circle at 75% 85%, rgba(236, 72, 153, 0.14) 0%, transparent 45%),
+    radial-gradient(circle at 20% 80%, rgba(16, 185, 129, 0.10) 0%, transparent 50%),
+    radial-gradient(ellipse 90% 50% at 50% 0%, rgba(56, 189, 248, 0.18) 0%, transparent 70%);
   background-attachment: fixed;
   color: var(--text-primary);
   line-height: 1.5;
@@ -91,7 +95,7 @@ body {
   min-height: 100vh;
 }
 
-/* High-tech engineering grid mesh pattern (No cliché purple blur) */
+/* Cosmic deep galaxy stardust & engineering celestial mesh pattern */
 body::before {
   content: '';
   position: fixed;
@@ -100,12 +104,20 @@ body::before {
   right: 0;
   bottom: 0;
   background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-  background-size: 36px 36px;
+    radial-gradient(1px 1px at 25px 35px, rgba(255, 255, 255, 0.65), transparent),
+    radial-gradient(1.5px 1.5px at 140px 75px, rgba(167, 139, 250, 0.75), transparent),
+    radial-gradient(1px 1px at 280px 190px, rgba(56, 189, 248, 0.7), transparent),
+    radial-gradient(1.5px 1.5px at 420px 80px, rgba(244, 114, 182, 0.6), transparent),
+    radial-gradient(1px 1px at 560px 240px, rgba(255, 255, 255, 0.55), transparent),
+    radial-gradient(1.5px 1.5px at 700px 120px, rgba(99, 102, 241, 0.65), transparent),
+    radial-gradient(1px 1px at 850px 310px, rgba(52, 211, 153, 0.5), transparent),
+    radial-gradient(1px 1px at 980px 180px, rgba(255, 255, 255, 0.6), transparent),
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 550px 550px, 600px 600px, 480px 480px, 650px 650px, 700px 700px, 520px 520px, 620px 620px, 450px 450px, 40px 40px, 40px 40px;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.8;
+  opacity: 0.9;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -2157,3 +2169,29 @@ input[type="range"]::-webkit-slider-thumb:hover {
   .stats-grid { grid-template-columns: 1fr; }
   .charts-grid-equal { grid-template-columns: 1fr; }
 }
+
+/* Cosmic Galaxy Aura Enhancements */
+.card, .chart-card, .data-table-container {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  background: rgba(10, 14, 26, 0.78);
+  border: 1px solid rgba(147, 51, 234, 0.18);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.55), 0 0 20px rgba(99, 102, 241, 0.06);
+}
+
+.card:hover, .chart-card:hover {
+  border-color: rgba(56, 189, 248, 0.35);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.65), 0 0 25px rgba(56, 189, 248, 0.12);
+}
+
+.preset-card {
+  background: rgba(13, 17, 34, 0.75);
+  border: 1px solid rgba(147, 51, 234, 0.15);
+  backdrop-filter: blur(12px);
+}
+
+.preset-card:hover {
+  border-color: rgba(167, 139, 250, 0.4);
+  box-shadow: 0 6px 24px rgba(147, 51, 234, 0.18);
+}
+

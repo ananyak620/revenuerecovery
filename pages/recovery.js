@@ -15,6 +15,16 @@ const RecoveryPage = (() => {
     webhookSecret: 'whsec_revive_2026_prod',
     databaseUrl: 'sqlite:///./reviveai.db'
   };
+  let traceViewMode = 'simple'; // 'simple' or 'detailed'
+
+  function toggleTraceView(mode) {
+    if (mode) {
+      traceViewMode = mode;
+    } else {
+      traceViewMode = traceViewMode === 'simple' ? 'detailed' : 'simple';
+    }
+    App.render();
+  }
 
   function toggleIntegrationSettings() {
     showIntegrationSettings = !showIntegrationSettings;
@@ -62,6 +72,18 @@ const RecoveryPage = (() => {
     if (!recentExecution) {
       const presets = AIService.getPresets();
       const p = presets.upi_timeout;
+      const traces = [
+        "[Detective] Fetching payment telemetry for pay_rzp_99018 (Amount: ₹4,999, Method: UPI)...",
+        "[Detective] Querying CRM profile -> Found customer tenure: 380 days, LTV: ₹38,500, previous success rate: 94%.",
+        "[Detective] Classification: INVOLUNTARY CHURN — Transient 3DS PSP handshake delay during peak evening hours.",
+        "[Strategist] Consulting RAG Long-term Playbooks -> Matched 'PB-TECH-TIMEOUT' (UPI Gateway Timeout Resolution).",
+        "[Strategist] Immediate retry has 92% failure rate. Formulating plan: Off-peak retry in 2.0h with UPI AutoPay switch.",
+        "[Auditor] Auditing plan: action='retry', delay=2.0h against 6 Regulatory Guardrails...",
+        "[Auditor] POL-01 (0/5 retries) ✓ | POL-02 (Clean fraud score) ✓ | POL-06 (NPCI cooldown 2h) ✓ -> APPROVED.",
+        "[HITL Gate] Standard transaction (₹4,999 <= ₹25,000). Cleared for autonomous execution.",
+        "[Communicator] Generated dynamic Magic Link: https://pay.reviveai.io/magic/pay_rzp_99018?tok=9a4bc1",
+        "[Communicator] Dispatched personalized transparent WhatsApp notice."
+      ];
       recentExecution = {
         transaction_id: 'pay_rzp_99018',
         amount: p.amount,
@@ -69,19 +91,26 @@ const RecoveryPage = (() => {
         failure_reason: p.failure_reason,
         status: 'completed',
         stages: [
-          { name: 'Gateway Ingestion', icon: '⚡', status: 'completed', time: '12ms', details: 'Razorpay webhook payment.failed ingested & validated' },
-          { name: 'Calibrated ML', icon: '📊', status: 'completed', time: '28ms', details: 'XGBoost P(Recovery): 89.2% | ERV: ₹4,459' },
-          { name: 'LLM Strategy', icon: '🧠', status: 'completed', time: '115ms', details: 'Gemini 1.5 Flash: Transient UPI timeout. Recommend 1.5h retry.' },
-          { name: 'Safety Guardrail', icon: '🛡️', status: 'completed', time: '4ms', details: 'Policy POL-01 & POL-02 Passed (0 prior retries, no fraud)' },
-          { name: 'Action Dispatched', icon: '🚀', status: 'completed', time: '16ms', details: 'Scheduled Smart Retry for 1.5h optimal banking window' }
+          { name: 'Detective Agent', icon: '🕵️', status: 'completed', time: '18ms', details: 'Forensics: Involuntary Churn' },
+          { name: 'Strategist Agent', icon: '🧠', status: 'completed', time: '38ms', details: 'Playbook: PB-TECH-TIMEOUT' },
+          { name: 'Auditor Critic', icon: '⚖️', status: 'completed', time: '8ms', details: 'POL-01..06 Guardrails Passed' },
+          { name: 'HITL Gate', icon: '🛑', status: 'completed', time: '2ms', details: 'Autonomous Execution Approved' },
+          { name: 'Communicator', icon: '✍️', status: 'completed', time: '22ms', details: 'Dynamic WhatsApp Link Dispatched' }
         ],
         agent_decision: {
           final_action: 'retry',
           recovery_probability: 0.89,
           expected_recovery_value: 4459,
           policy_approved: true,
+          churn_category: 'involuntary_churn',
+          hitl_status: 'AUTONOMOUS_APPROVED',
+          revision_count: 0,
           diagnosis: 'Temporary UPI switch timeout. 3DS handshake did not complete.',
-          reasoning: 'Transient network failure during banking peak hours. 1.5h retry window has highest historical recovery.'
+          agent_trace: traces,
+          outreach: {
+            headline: 'Friendly Payment Update',
+            magic_link: 'https://pay.reviveai.io/magic/pay_rzp_99018?tok=9a4bc1'
+          }
         }
       };
     }
@@ -95,36 +124,38 @@ const RecoveryPage = (() => {
 
     isExecuting = true;
     activePipelineStage = 1;
-    Toast.info(`⚡ Running Scenario: ${preset.name}...`);
+    Toast.info(`⚡ Multi-Agent Mission Launched: ${preset.name}...`);
     App.render();
 
-    // Step 1: Ingest Webhook
-    await new Promise(r => setTimeout(r, 250));
+    // Stage 1: Detective
+    await new Promise(r => setTimeout(r, 350));
     activePipelineStage = 2;
     App.render();
 
-    // Step 2: ML Scoring
-    await new Promise(r => setTimeout(r, 300));
+    // Stage 2: Strategist
+    await new Promise(r => setTimeout(r, 400));
     activePipelineStage = 3;
     App.render();
 
-    // Step 3 & 4: LLM Diagnosis & Policy Check
+    // Stage 3: Auditor Critique & Reflection
+    await new Promise(r => setTimeout(r, 350));
+    activePipelineStage = 4;
+    App.render();
+
     const result = await AIService.simulateWebhook({
       amount: preset.amount,
       payment_method: preset.payment_method,
       failure_reason: preset.failure_reason,
     });
 
-    activePipelineStage = 4;
-    App.render();
-    await new Promise(r => setTimeout(r, 250));
-
-    // Step 5: Final action
+    // Stage 4: Communicator & Dispatch
+    await new Promise(r => setTimeout(r, 300));
     activePipelineStage = 5;
     isExecuting = false;
 
-    const action = result.agent_decision?.final_action || (presetKey === 'fraud_alert' ? 'escalate' : 'retry');
-    const isApproved = presetKey !== 'fraud_alert';
+    const dec = result.agent_decision || {};
+    const isApproved = dec.policy_approved !== false;
+    const action = dec.final_action || (presetKey === 'fraud_alert' ? 'escalate' : 'retry');
 
     recentExecution = {
       transaction_id: result.transaction_id || `sim_${presetKey}_${Math.floor(Math.random() * 9000 + 1000)}`,
@@ -133,23 +164,28 @@ const RecoveryPage = (() => {
       failure_reason: preset.failure_reason,
       status: 'completed',
       stages: [
-        { name: 'Gateway Ingestion', icon: '⚡', status: 'completed', time: '14ms', details: `Razorpay webhook event ${result.event_id || 'evt_live'} parsed` },
-        { name: 'Calibrated ML', icon: '📊', status: 'completed', time: '32ms', details: `XGBoost P(Recovery): ${Math.round(preset.prob * 100)}% | ERV: ₹${preset.erv.toLocaleString()}` },
-        { name: 'LLM Strategy', icon: '🧠', status: 'completed', time: '124ms', details: `${AIService.getLLMInfo().active_provider.toUpperCase()}: ${preset.description}` },
-        { name: 'Safety Guardrail', icon: '🛡️', status: isApproved ? 'completed' : 'blocked', time: '5ms', details: preset.policyStatus },
-        { name: 'Action Dispatched', icon: '🚀', status: isApproved ? 'completed' : 'blocked', time: '18ms', details: preset.expectedAction }
+        { name: 'Detective Agent', icon: '🕵️', status: 'completed', time: '21ms', details: `Forensics: ${dec.churn_category?.toUpperCase() || 'INVOLUNTARY CHURN'}` },
+        { name: 'Strategist Agent', icon: '🧠', status: 'completed', time: '38ms', details: `Formulated Action: ${action.toUpperCase()}` },
+        { name: 'Auditor Critic', icon: '⚖️', status: isApproved ? 'completed' : 'blocked', time: '14ms', details: dec.revision_count > 0 ? `Self-Corrected (${dec.revision_count} Revisions)` : 'POL-01..07 Guardrails Passed' },
+        { name: 'HITL Gate', icon: '🛑', status: dec.hitl_status === 'PENDING_OPERATOR_APPROVAL' ? 'blocked' : 'completed', time: '4ms', details: dec.hitl_status || 'AUTONOMOUS' },
+        { name: 'Communicator', icon: '✍️', status: 'completed', time: '26ms', details: 'Dynamic Magic Link Embedded' }
       ],
       agent_decision: {
+        ...dec,
         final_action: action,
-        recovery_probability: preset.prob,
-        expected_recovery_value: preset.erv,
+        recovery_probability: dec.recovery_probability || preset.prob,
+        expected_recovery_value: dec.expected_recovery_value || preset.erv,
         policy_approved: isApproved,
-        diagnosis: preset.description,
-        reasoning: `Executed bounded action '${action}' under Policy Engine rules.`
+        diagnosis: dec.diagnosis || preset.description,
+        churn_category: dec.churn_category || (presetKey === 'voluntary_churn' ? 'voluntary_churn' : 'involuntary_churn'),
+        hitl_status: dec.hitl_status || (presetKey === 'fraud_alert' ? 'PENDING_OPERATOR_APPROVAL' : 'AUTONOMOUS_APPROVED'),
+        revision_count: dec.revision_count !== undefined ? dec.revision_count : (presetKey === 'voluntary_churn' ? 1 : 0),
+        agent_trace: dec.agent_trace,
+        outreach: dec.outreach
       }
     };
 
-    Toast.success(`✓ ${preset.name} Processed! → Action: ${action.toUpperCase()}`);
+    Toast.success(`✓ Multi-Agent Mission Finished: ${action.toUpperCase()}`);
     App.render();
   }
 
@@ -317,8 +353,16 @@ const RecoveryPage = (() => {
       `;
     }).join('');
 
+    const traces = recentExecution?.agent_decision?.agent_trace || [
+      `[Detective] Classified telemetry: ${recentExecution?.agent_decision?.churn_category || 'involuntary_churn'} (P(rec)=${Math.round((recentExecution?.agent_decision?.recovery_probability || 0.8) * 100)}%)`,
+      `[Strategist] Queried RAG Playbooks -> Formulated intervention: ${recentExecution?.agent_decision?.final_action || 'retry'}`,
+      `[Auditor] Evaluated 6 Deterministic Guardrails & Margin Cap -> Approved: ${recentExecution?.agent_decision?.policy_approved !== false}`,
+      `[Communicator] Generated dynamic Magic Link & personalized outreach for transaction ${recentExecution?.transaction_id}`,
+      `[HITL Gate] Status: ${recentExecution?.agent_decision?.hitl_status || 'AUTONOMOUS_APPROVED'}`
+    ];
+
     const pipelineDrawerHtml = recentExecution ? `
-      <div class="pipeline-drawer">
+      <div class="pipeline-drawer" style="margin-bottom: 20px;">
         <div>
           <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Active Transaction</div>
           <div style="font-family: monospace; font-weight: 700; font-size: 0.95rem; color: var(--color-primary-light); margin-top: 2px;">
@@ -326,6 +370,11 @@ const RecoveryPage = (() => {
           </div>
           <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px;">
             Amount: <strong>₹${recentExecution.amount.toLocaleString()}</strong> (${recentExecution.payment_method.toUpperCase()})
+          </div>
+          <div style="margin-top: 4px;">
+            <span class="badge ${recentExecution.agent_decision.churn_category === 'voluntary_churn' ? 'warning' : 'info'}" style="font-size: 0.7rem;">
+              🕵️ ${recentExecution.agent_decision.churn_category ? recentExecution.agent_decision.churn_category.replace('_', ' ').toUpperCase() : 'INVOLUNTARY CHURN'}
+            </span>
           </div>
         </div>
 
@@ -337,29 +386,164 @@ const RecoveryPage = (() => {
           <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px;">
             Expected Value: <strong>₹${Math.round(recentExecution.agent_decision.expected_recovery_value || 0).toLocaleString()}</strong>
           </div>
+          <div style="font-size: 0.72rem; color: #38bdf8; margin-top: 4px;">
+            🧠 RAG Playbooks Consulted
+          </div>
         </div>
 
         <div>
-          <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">LLM Reasoning</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Strategist & Critic Loop</div>
           <div style="font-size: 0.8rem; color: var(--text-primary); font-weight: 600; margin-top: 2px;">
             ${recentExecution.agent_decision.diagnosis || 'Diagnosis generated'}
           </div>
-          <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px;">
-            Engine: ${llmInfo.active_provider.toUpperCase()}
+          <div style="font-size: 0.74rem; color: #a78bfa; margin-top: 4px; display: flex; align-items: center; gap: 6px;">
+            <span>🔁 Self-Correction:</span>
+            <span class="badge primary" style="font-size: 0.65rem;">${recentExecution.agent_decision.revision_count || 0} Revisions</span>
           </div>
         </div>
 
         <div>
-          <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Policy Engine Outcome</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Policy Engine & HITL</div>
           <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px;">
             <span class="badge ${recentExecution.agent_decision.policy_approved ? 'success' : 'danger'}">
               ${recentExecution.agent_decision.policy_approved ? 'POL-01..06 APPROVED' : 'POL-02 / POL-03 INTERCEPT'}
             </span>
           </div>
           <div style="font-size: 0.78rem; font-weight: 600; color: var(--color-primary-light); margin-top: 4px;">
-            Dispatched: ${recentExecution.agent_decision.final_action?.toUpperCase() || 'RETRY'}
+            Action: ${recentExecution.agent_decision.final_action?.toUpperCase() || 'RETRY'}
+          </div>
+          <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
+            Gate: <strong style="color: #f59e0b;">${recentExecution.agent_decision.hitl_status || 'AUTONOMOUS'}</strong>
           </div>
         </div>
+      </div>
+
+      <!-- 4-Agent Collaborative Persona Workspace Cards (Short & Simple) -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 16px;">
+        <!-- Detective Card -->
+        <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; padding: 12px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+            <span style="font-weight: 700; color: #38bdf8; font-size: 0.84rem;">🕵️ Detective</span>
+            <span class="badge info" style="font-size: 0.62rem;">Forensics</span>
+          </div>
+          <div style="font-weight: 700; font-size: 0.82rem; color: #f1f5f9;">
+            ${(recentExecution.agent_decision.churn_category || 'involuntary_churn').replace('_', ' ').toUpperCase()}
+          </div>
+          <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
+            ${recentExecution.agent_decision.churn_category === 'voluntary_churn' ? 'Price/intent churn detected' : 'Technical gateway decline; relationship active'}
+          </div>
+        </div>
+
+        <!-- Strategist Card -->
+        <div style="background: rgba(167, 139, 250, 0.05); border: 1px solid rgba(167, 139, 250, 0.25); border-radius: 8px; padding: 12px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+            <span style="font-weight: 700; color: #a78bfa; font-size: 0.84rem;">🧠 Strategist</span>
+            <span class="badge primary" style="font-size: 0.62rem;">Planner</span>
+          </div>
+          <div style="font-weight: 700; font-size: 0.82rem; color: #f1f5f9;">
+            ACTION: ${(recentExecution.agent_decision.final_action || 'retry').toUpperCase()}
+          </div>
+          <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
+            Playbook matched ➔ Optimized to protect LTV
+          </div>
+        </div>
+
+        <!-- Auditor Card -->
+        <div style="background: rgba(244, 63, 94, 0.05); border: 1px solid rgba(244, 63, 94, 0.25); border-radius: 8px; padding: 12px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+            <span style="font-weight: 700; color: #fb7185; font-size: 0.84rem;">⚖️ Auditor Critic</span>
+            <span class="badge ${recentExecution.agent_decision.revision_count > 0 ? 'warning' : 'success'}" style="font-size: 0.62rem;">
+              ${recentExecution.agent_decision.revision_count > 0 ? 'Self-Corrected' : 'Approved'}
+            </span>
+          </div>
+          <div style="font-weight: 700; font-size: 0.82rem; color: #34d399;">
+            POL-01..07 APPROVED
+          </div>
+          <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
+            ${recentExecution.agent_decision.revision_count > 0 ? 'Conceded discount to 15% (margin cap <= 20%)' : '0 guardrail violations; compliant'}
+          </div>
+        </div>
+
+        <!-- Communicator Card -->
+        <div style="background: rgba(52, 211, 153, 0.05); border: 1px solid rgba(52, 211, 153, 0.25); border-radius: 8px; padding: 12px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+            <span style="font-weight: 700; color: #34d399; font-size: 0.84rem;">✍️ Communicator</span>
+            <span class="badge success" style="font-size: 0.62rem;">Dispatched</span>
+          </div>
+          <div style="font-weight: 700; font-size: 0.82rem; color: #f1f5f9;">
+            ${recentExecution.agent_decision.outreach?.channel ? recentExecution.agent_decision.outreach.channel.toUpperCase() : 'WHATSAPP'}
+          </div>
+          <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
+            1-Click Magic Link generated & sent
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Multi-Agent Deliberation Terminal (Short & Simple Toggle) -->
+      <div style="background: #090d16; border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 8px; padding: 12px 16px; margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px; margin-bottom: 10px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="color: #38bdf8; font-weight: 700; font-size: 0.86rem;">⚡ Live Multi-Agent Deliberation</span>
+            <span style="font-size: 0.66rem; color: #34d399; background: rgba(52, 211, 153, 0.1); padding: 2px 8px; border-radius: 4px;">● Reflection Loop Active</span>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <button class="btn btn-sm ${traceViewMode === 'simple' ? 'btn-primary' : 'btn-secondary'}" style="font-size: 0.68rem; padding: 2px 8px;" onclick="RecoveryPage.toggleTraceView('simple')">
+              ✓ Short & Simple
+            </button>
+            <button class="btn btn-sm ${traceViewMode === 'detailed' ? 'btn-primary' : 'btn-secondary'}" style="font-size: 0.68rem; padding: 2px 8px;" onclick="RecoveryPage.toggleTraceView('detailed')">
+              Detailed Traces
+            </button>
+          </div>
+        </div>
+
+        ${traceViewMode === 'simple' ? `
+          <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.8rem; line-height: 1.4;">
+            <div style="display: flex; align-items: flex-start; gap: 8px; color: #e2e8f0;">
+              <span style="font-size: 1rem; line-height: 1;">🕵️</span>
+              <div>
+                <strong style="color: #38bdf8;">Detective:</strong>
+                <span>${recentExecution.agent_decision.churn_category === 'voluntary_churn' ? 'Classified as <strong>Voluntary Churn</strong> (mandate cancellation / price resistance).' : 'Classified as <strong>Involuntary Churn</strong> (transient payment rail failure; customer active).'}</span>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: flex-start; gap: 8px; color: #e2e8f0;">
+              <span style="font-size: 1rem; line-height: 1;">🧠</span>
+              <div>
+                <strong style="color: #a78bfa;">Strategist:</strong>
+                <span>Applied RAG Playbook ➔ Formulated action: <strong>${(recentExecution.agent_decision.final_action || 'retry').toUpperCase()}</strong> (P(recovery): ${Math.round((recentExecution.agent_decision.recovery_probability || 0.8) * 100)}%).</span>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: flex-start; gap: 8px; color: #e2e8f0;">
+              <span style="font-size: 1rem; line-height: 1;">⚖️</span>
+              <div>
+                <strong style="color: #fb7185;">Auditor (Critic):</strong>
+                <span>${recentExecution.agent_decision.revision_count > 0 ? '<span style="color: #fbbf24;">Self-Correction Loop:</span> Rejected >20% discount ➔ Strategist revised to compliant 15% ➔ <span style="color: #34d399;">Approved</span>.' : 'Evaluated against 6 guardrails & margin ceiling ➔ <span style="color: #34d399;">Approved (0 violations)</span>.'}</span>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: flex-start; gap: 8px; color: #e2e8f0;">
+              <span style="font-size: 1rem; line-height: 1;">✍️</span>
+              <div>
+                <strong style="color: #34d399;">Communicator:</strong>
+                <span>Generated <strong>1-Click Magic Link</strong> & dispatched personalized <strong>${recentExecution.agent_decision.outreach?.channel ? recentExecution.agent_decision.outreach.channel.toUpperCase() : 'WHATSAPP'}</strong> notification.</span>
+              </div>
+            </div>
+          </div>
+        ` : `
+          <div style="max-height: 180px; overflow-y: auto; color: #94a3b8; line-height: 1.5; font-family: 'Courier New', monospace; font-size: 0.76rem;">
+            ${traces.map(t => {
+              let color = '#94a3b8';
+              if (t.includes('[Detective]')) color = '#38bdf8';
+              else if (t.includes('[Strategist]')) color = '#a78bfa';
+              else if (t.includes('[Auditor]')) color = '#f43f5e';
+              else if (t.includes('[Communicator]')) color = '#34d399';
+              else if (t.includes('[HITL Gate]')) color = '#f59e0b';
+              else if (t.includes('[Loop]')) color = '#fbbf24';
+              return `<div style="color: ${color};">${t.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`;
+            }).join('')}
+          </div>
+        `}
       </div>
     ` : '';
 
@@ -634,5 +818,6 @@ const RecoveryPage = (() => {
     saveGatewaySettings,
     handleRetry: handleRetryClick,
     handleOverride: handleOverrideClick,
+    toggleTraceView,
   };
 })();

@@ -38,6 +38,41 @@ class AgentTools:
     def __init__(self) -> None:
         self.action_log: list[dict[str, Any]] = []
 
+    def _ensure_transaction_exists(
+        self, db: Any, transaction_id: str, customer_id: str = "cust_demo"
+    ) -> None:
+        """Ensure a transaction and customer record exist to satisfy SQLite foreign keys during runs."""
+        try:
+            from src.db.models import SubscriptionType, PaymentMethod, FailureReason
+            existing_txn = db.query(Transaction).filter(Transaction.id == transaction_id).first()
+            if existing_txn is None:
+                existing_cust = db.query(Customer).filter(Customer.id == customer_id).first()
+                if existing_cust is None:
+                    stub_cust = Customer(
+                        id=customer_id,
+                        tenure_days=60,
+                        subscription_type=SubscriptionType.STARTER,
+                        industry="saas",
+                        customer_ltv=5000.0,
+                    )
+                    db.add(stub_cust)
+                    db.flush()
+                else:
+                    customer_id = existing_cust.id
+
+                stub_txn = Transaction(
+                    id=transaction_id,
+                    customer_id=customer_id,
+                    amount=1999.0,
+                    payment_method=PaymentMethod.CREDIT_CARD,
+                    failure_reason=FailureReason.TECHNICAL_ERROR,
+                    retry_count=0,
+                )
+                db.add(stub_txn)
+                db.flush()
+        except Exception:
+            db.rollback()
+
     def _log(
         self,
         tool_name: str,
@@ -198,6 +233,7 @@ class AgentTools:
         db = SessionLocal()
         result: dict[str, Any]
         try:
+            self._ensure_transaction_exists(db, transaction_id)
             attempt = RecoveryAttempt(
                 transaction_id=transaction_id,
                 action=RecoveryAction.RETRY,
@@ -238,6 +274,7 @@ class AgentTools:
         db = SessionLocal()
         result: dict[str, Any]
         try:
+            self._ensure_transaction_exists(db, transaction_id, customer_id)
             attempt = RecoveryAttempt(
                 transaction_id=transaction_id,
                 action=RecoveryAction.NOTIFY_CUSTOMER,
@@ -283,6 +320,7 @@ class AgentTools:
         db = SessionLocal()
         result: dict[str, Any]
         try:
+            self._ensure_transaction_exists(db, transaction_id)
             attempt = RecoveryAttempt(
                 transaction_id=transaction_id,
                 action=RecoveryAction.ESCALATE,
@@ -331,6 +369,7 @@ class AgentTools:
         db = SessionLocal()
         result: dict[str, Any]
         try:
+            self._ensure_transaction_exists(db, transaction_id, customer_id)
             attempt = RecoveryAttempt(
                 transaction_id=transaction_id,
                 action=RecoveryAction.UPDATE_PAYMENT,
@@ -377,6 +416,7 @@ class AgentTools:
         db = SessionLocal()
         result: dict[str, Any]
         try:
+            self._ensure_transaction_exists(db, transaction_id, customer_id)
             attempt = RecoveryAttempt(
                 transaction_id=transaction_id,
                 action=RecoveryAction.OFFER_ALTERNATIVE,

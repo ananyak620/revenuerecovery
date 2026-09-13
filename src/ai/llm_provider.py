@@ -38,54 +38,193 @@ class BaseLLMProvider(abc.ABC):
 
 
 class GeminiProvider(BaseLLMProvider):
-    """Google Gemini cloud LLM provider."""
+    """Google Gemini cloud LLM provider via direct Generative Language REST API."""
 
-    def __init__(self, model_name: str = "gemini-2.0-flash"):
+    def __init__(self, model_name: str = "gemini-3.6-flash"):
         super().__init__("gemini", model_name)
-        self.client = None
-        self._init_client()
-
-    def _init_client(self):
-        if settings.has_gemini_key:
-            try:
-                import google.generativeai as genai  # type: ignore[reportMissingImports]
-
-                genai.configure(api_key=settings.gemini_api_key)  # type: ignore[reportPrivateImportUsage]
-                self.client = genai.GenerativeModel(  # type: ignore[reportPrivateImportUsage]
-                    model_name=self.model_name,
-                    system_instruction=SYSTEM_PROMPT,
-                    generation_config={  # type: ignore[arg-type]
-                        "temperature": 0.2,
-                        "top_p": 0.8,
-                        "response_mime_type": "application/json",
-                    },
-                )
-            except Exception as e:
-                self.client = None
+        self.api_key = settings.gemini_api_key
 
     def is_available(self) -> bool:
-        return self.client is not None
+        return bool(self.api_key or settings.gemini_api_key)
+
+    async def generate_text(self, prompt: str, system_instruction: Optional[str] = None) -> str:
+        """Generate open-ended text from Gemini."""
+        key = self.api_key or settings.gemini_api_key
+        if not key:
+            raise RuntimeError("Gemini API key is missing.")
+
+        models_to_try = [self.model_name, "gemini-3.6-flash", "gemini-flash-latest"]
+        payload: Dict[str, Any] = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"temperature": 0.2, "topP": 0.8},
+        }
+        if system_instruction:
+            payload["systemInstruction"] = {"parts": [{"text": system_instruction}]}
+
+        last_error = None
+        for m in models_to_try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={key}"
+            try:
+                import httpx
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    resp = await client.post(url, json=payload)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        candidates = data.get("candidates", [])
+                        if candidates and "parts" in candidates[0].get("content", {}):
+                            return candidates[0]["content"]["parts"][0].get("text", "").strip()
+                    last_error = f"HTTP {resp.status_code}: {resp.text[:150]}"
+            except Exception as e:
+                last_error = str(e)
+
+        raise RuntimeError(f"Gemini API request failed across candidate models. Last error: {last_error}")
+
+    async def generate_json(self, prompt: str, system_instruction: Optional[str] = None) -> Dict[str, Any]:
+        """Generate structured JSON from Gemini using application/json response mode."""
+        key = self.api_key or settings.gemini_api_key
+        if not key:
+            raise RuntimeError("Gemini API key is missing.")
+
+        models_to_try = [self.model_name, "gemini-3.6-flash", "gemini-flash-latest"]
+        payload: Dict[str, Any] = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {
+                "temperature": 0.2,
+                "topP": 0.8,
+                "responseMimeType": "application/json",
+            },
+        }
+        if system_instruction:
+            payload["systemInstruction"] = {"parts": [{"text": system_instruction}]}
+
+        last_error = None
+        for m in models_to_try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={key}"
+            try:
+                import httpx
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    resp = await client.post(url, json=payload)
+                    if resp.status_code == 200:
+                        raw_text = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+                        if raw_text.startswith("```json"):
+                            raw_text = raw_text[7:]
+                        if raw_text.startswith("```"):
+                            raw_text = raw_text[3:]
+                        if raw_text.endswith("```"):
+                            raw_text = raw_text[:-3]
+                        return json.loads(raw_text.strip())
+                    last_error = f"HTTP {resp.status_code}: {resp.text[:150]}"
+            except Exception as e:
+                last_error = str(e)
+
+        raise RuntimeError(f"Gemini JSON generation failed across models: {last_error}")
+
+    def generate_json_sync(self, prompt: str, system_instruction: Optional[str] = None) -> Dict[str, Any]:
+        """Synchronously generate structured JSON from Gemini using application/json response mode."""
+        key = self.api_key or settings.gemini_api_key
+        if not key:
+            raise RuntimeError("Gemini API key is missing.")
+
+        models_to_try = [self.model_name, "gemini-3.6-flash", "gemini-flash-latest"]
+        payload: Dict[str, Any] = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {
+                "temperature": 0.2,
+                "topP": 0.8,
+                "responseMimeType": "application/json",
+            },
+        }
+        if system_instruction:
+            payload["systemInstruction"] = {"parts": [{"text": system_instruction}]}
+
+        last_error = None
+        for m in models_to_try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={key}"
+            try:
+                import httpx
+                with httpx.Client(timeout=30.0) as client:
+                    resp = client.post(url, json=payload)
+                    if resp.status_code == 200:
+                        raw_text = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+                        if raw_text.startswith("```json"):
+                            raw_text = raw_text[7:]
+                        if raw_text.startswith("```"):
+                            raw_text = raw_text[3:]
+                        if raw_text.endswith("```"):
+                            raw_text = raw_text[:-3]
+                        return json.loads(raw_text.strip())
+                    last_error = f"HTTP {resp.status_code}: {resp.text[:150]}"
+            except Exception as e:
+                last_error = str(e)
+
+        raise RuntimeError(f"Gemini synchronous JSON generation failed across models: {last_error}")
 
     async def generate_diagnosis(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        key = self.api_key or settings.gemini_api_key
         if not self.is_available():
             raise RuntimeError("Gemini provider is not initialized or missing API key.")
 
-        prompt = DIAGNOSIS_PROMPT.format(**context)
-        # Run synchronous SDK call in async thread pool if needed
-        assert self.client is not None
-        response = self.client.generate_content(prompt)
-        text = response.text.strip()
-        # Clean any markdown codeblock backticks if present
-        if text.startswith("```json"):
-            text = text[7:]
-        if text.startswith("```"):
-            text = text[3:]
-        if text.endswith("```"):
-            text = text[:-3]
-        result = json.loads(text.strip())
-        result["provider"] = "gemini"
-        result["model"] = self.model_name
-        return result
+        amount_val = float(context.get("amount", 0.0))
+        prob_val = float(context.get("recovery_probability", 0.5))
+        safe_ctx = {
+            "transaction_id": str(context.get("transaction_id", "txn_auto")),
+            "amount": amount_val,
+            "payment_method": str(context.get("payment_method", "card")),
+            "failure_reason": str(context.get("failure_reason", "unknown")),
+            "retry_count": int(context.get("retry_count", 0)),
+            "time_since_failure_hours": float(context.get("time_since_failure_hours", 1.0)),
+            "customer_id": str(context.get("customer_id", "cust_auto")),
+            "customer_tenure_days": int(context.get("customer_tenure_days", context.get("customer_tenure", 30))),
+            "subscription_type": str(context.get("subscription_type", context.get("sub_type", "pro_monthly"))),
+            "previous_success_rate": float(context.get("previous_success_rate", 0.8)),
+            "historical_recovery_rate": float(context.get("historical_recovery_rate", 0.5)),
+            "nps_score": float(context.get("nps_score", 7.0)),
+            "support_tickets_last_30d": int(context.get("support_tickets_last_30d", 0)),
+            "days_since_last_login": int(context.get("days_since_last_login", 2)),
+            "recovery_probability": prob_val,
+            "expected_recovery_value": float(context.get("expected_recovery_value", amount_val * prob_val)),
+            "risk_level": str(context.get("risk_level", "medium")),
+        }
+
+        prompt = DIAGNOSIS_PROMPT.format(**safe_ctx)
+        models_to_try = [self.model_name, "gemini-3.6-flash", "gemini-flash-latest"]
+
+        payload: Dict[str, Any] = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "systemInstruction": {"parts": [{"text": SYSTEM_PROMPT}]},
+            "generationConfig": {
+                "temperature": 0.1,
+                "topP": 0.8,
+                "responseMimeType": "application/json",
+            },
+        }
+
+        last_error = None
+        for m in models_to_try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={key}"
+            try:
+                import httpx
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    resp = await client.post(url, json=payload)
+                    if resp.status_code == 200:
+                        raw_text = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+                        # Clean code fence if model returned markdown
+                        if raw_text.startswith("```json"):
+                            raw_text = raw_text[7:]
+                        if raw_text.startswith("```"):
+                            raw_text = raw_text[3:]
+                        if raw_text.endswith("```"):
+                            raw_text = raw_text[:-3]
+                        result = json.loads(raw_text.strip())
+                        result["provider"] = "gemini"
+                        result["model"] = m
+                        return result
+                    last_error = f"HTTP {resp.status_code}: {resp.text[:150]}"
+            except Exception as e:
+                last_error = str(e)
+
+        raise RuntimeError(f"Gemini diagnosis failed: {last_error}")
+
 
 
 class OpenAICompatibleProvider(BaseLLMProvider):

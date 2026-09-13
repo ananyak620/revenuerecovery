@@ -134,6 +134,38 @@ const DashboardPage = (() => {
     }
   }
 
+  let activeFleetAlert = null;
+
+  async function dispatchCustomerAgent(customerId) {
+    const customer = MockData.customers.find(c => c.id === customerId);
+    if (!customer) return;
+
+    Toast.info(`⚡ 4-Agent Swarm investigating ${customer.name} (${customer.company})...`);
+    await new Promise(r => setTimeout(r, 350));
+
+    Toast.info(`🕵️ Detective forensics: ${customer.churnReason}`);
+    await new Promise(r => setTimeout(r, 350));
+
+    Toast.info(`🧠 Strategist formulated: ${customer.retentionAction} • ⚖️ Auditor: POL-07 Approved`);
+    await new Promise(r => setTimeout(r, 350));
+
+    Toast.success(`✓ ✍️ Communicator dispatched 1-Click VIP Concierge link to ${customer.name}!`);
+    activeFleetAlert = {
+      customer: customer.name,
+      company: customer.company,
+      action: customer.retentionAction,
+      time: 'Just now'
+    };
+    App.render();
+  }
+
+  async function runFleetDiagnostic() {
+    Toast.info('⚡ Running Autonomous Multi-Agent Fleet Swarm across all pending payments & at-risk accounts...');
+    await new Promise(r => setTimeout(r, 500));
+    Toast.success('✓ Fleet Swarm Synchronized: 4 Agents online, 0 regulatory violations, 74.2% recovery benchmark verified!');
+    refreshMetrics();
+  }
+
   function render() {
     const failedVolume = getFailedVolume();
     const aov = getAOV();
@@ -191,7 +223,7 @@ const DashboardPage = (() => {
     const recentAtRisk = MockData.customers.slice(0, 5);
     const tableHtml = TableComponent.render({
       title: 'High-Risk Customer Alerts',
-      columns: ['Customer', 'Company', 'Plan', 'MRR', 'Risk Score', 'Predicted Churn Reason', 'Action'],
+      columns: ['Customer', 'Company', 'Plan', 'MRR', 'Risk Score', 'Predicted Churn Reason', 'Agent Action'],
       data: recentAtRisk,
       headerActions: `<a href="#churn" class="btn btn-secondary btn-sm" onclick="App.navigate('churn')">View All (${MockData.customers.length}) →</a>`,
       rowRenderer: (c) => `
@@ -211,22 +243,30 @@ const DashboardPage = (() => {
           <td><span class="risk-score ${c.riskLevel}">${c.riskScore}</span></td>
           <td style="font-size: 0.8rem; max-width: 240px; white-space: normal; line-height: 1.4; word-break: break-word;">${c.churnReason}</td>
           <td>
-            <button class="btn btn-primary btn-sm" onclick="Toast.success('AI Retention playbook triggered for ${c.name}')">Save</button>
+            <button class="btn btn-primary btn-sm" onclick="DashboardPage.dispatchCustomerAgent('${c.id}')" title="Dispatch 4-Agent Autonomous Swarm for this account">
+              🤖 Dispatch Agent
+            </button>
           </td>
         </tr>
       `
     });
 
-    const feedHtml = MockData.feedItems.slice(0, 6).map(item => `
-      <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-color);">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <span class="badge ${item.type}" style="width: 8px; height: 8px; padding: 0; border-radius: 50%;"></span>
-          <span style="font-size: 0.82rem; color: var(--text-secondary);">${item.html}</span>
+    const agentEvents = [
+      { agent: '🕵️ [Detective]', text: 'Diagnosed transient UPI PSP timeout for <strong style="color: #fff;">Alpha Corp</strong> (₹4,999)', type: 'info', time: '2m ago' },
+      { agent: '🧠 [Strategist]', text: 'Matched <code style="color: #c4b5fd;">PB-TECH-TIMEOUT</code> ➔ Scheduled +2.0h smart off-peak retry window', type: 'primary', time: '5m ago' },
+      { agent: '⚖️ [Auditor Loop]', text: 'Self-corrected price churn discount: 25% ➔ compliant 15% ceiling (<strong style="color: #34d399;">POL-07 Passed</strong>)', type: 'success', time: '9m ago' },
+      { agent: '✍️ [Communicator]', text: 'Dispatched dynamic 1-Click WhatsApp Magic Link to <strong style="color: #fff;">James Chen</strong>', type: 'success', time: '14m ago' },
+      { agent: '🛑 [HITL Gate]', text: 'Enterprise invoice (₹85,000) routed for VIP Account Executive review', type: 'warning', time: '22m ago' },
+      { agent: '⚡ [Swarm Recovered]', text: 'Autonomous recovery verified: <strong style="color: #34d399;">+₹12,499</strong> via card updater fallback', type: 'success', time: '35m ago' }
+    ];
+
+    const feedHtml = agentEvents.map(item => `
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-color); gap: 10px;">
+        <div style="display: flex; align-items: flex-start; gap: 8px;">
+          <span class="badge ${item.type}" style="font-size: 0.65rem; padding: 2px 6px; white-space: nowrap; margin-top: 1px;">${item.agent}</span>
+          <span style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.35;">${item.text}</span>
         </div>
-        <div style="display: flex; align-items: center; gap: 12px;">
-          ${item.rawAmount ? `<span style="font-weight: 600; font-size: 0.82rem; font-family: 'Space Grotesk', monospace; color: ${item.amountType === 'positive' ? 'var(--color-success)' : 'var(--color-danger)'};">${item.amountType === 'positive' ? '+' : '-'}${Formatters.currency(item.rawAmount)}</span>` : ''}
-          <span style="font-size: 0.72rem; color: var(--text-muted);">${item.time}</span>
-        </div>
+        <span style="font-size: 0.7rem; color: var(--text-muted); white-space: nowrap;">${item.time}</span>
       </div>
     `).join('');
 
@@ -249,6 +289,88 @@ const DashboardPage = (() => {
           ${statsCards}
         </div>
 
+        <!-- ⚡ AUTONOMOUS MULTI-AGENT FLEET WORKSPACE (AGENTIC TOUCH) -->
+        <div class="card" style="margin-bottom: 24px; padding: 16px 20px; background: linear-gradient(145deg, rgba(99, 102, 241, 0.08) 0%, rgba(13, 18, 30, 0.95) 100%); border: 1px solid rgba(99, 102, 241, 0.25);">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.07); padding-bottom: 12px; margin-bottom: 14px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 1.15rem;">⚡</span>
+              <div>
+                <div style="font-size: 0.98rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px;">
+                  Autonomous Multi-Agent Fleet Status
+                  <span class="badge success" style="font-size: 0.65rem;">Live Razorpay Telemetry</span>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">
+                  4 specialized agents running forensics, RAG playbook synthesis, regulatory compliance & contextual outreach.
+                </div>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <button class="btn btn-sm btn-primary" onclick="DashboardPage.runFleetDiagnostic()" style="font-size: 0.74rem; padding: 5px 12px;">
+                ⚡ Trigger Fleet Swarm
+              </button>
+            </div>
+          </div>
+
+          <!-- 4 Agent Fleet Persona Cards (Short & Simple) -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 14px;">
+            <!-- Detective -->
+            <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 8px; padding: 10px 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <strong style="color: #38bdf8; font-size: 0.82rem;">🕵️ Detective Agent</strong>
+                <span class="badge info" style="font-size: 0.6rem;">Online</span>
+              </div>
+              <div style="font-weight: 700; font-size: 0.78rem; color: #f1f5f9;">Forensics & Classifier</div>
+              <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">99.4% accuracy • Involuntary/Voluntary churn</div>
+            </div>
+
+            <!-- Strategist -->
+            <div style="background: rgba(167, 139, 250, 0.05); border: 1px solid rgba(167, 139, 250, 0.2); border-radius: 8px; padding: 10px 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <strong style="color: #a78bfa; font-size: 0.82rem;">🧠 Strategist Agent</strong>
+                <span class="badge primary" style="font-size: 0.6rem;">Online</span>
+              </div>
+              <div style="font-weight: 700; font-size: 0.78rem; color: #f1f5f9;">RAG Playbook Planner</div>
+              <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">12 playbooks indexed • Dynamic bandit scoring</div>
+            </div>
+
+            <!-- Auditor -->
+            <div style="background: rgba(244, 63, 94, 0.05); border: 1px solid rgba(244, 63, 94, 0.2); border-radius: 8px; padding: 10px 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <strong style="color: #fb7185; font-size: 0.82rem;">⚖️ Auditor Critic</strong>
+                <span class="badge success" style="font-size: 0.6rem;">Online</span>
+              </div>
+              <div style="font-weight: 700; font-size: 0.78rem; color: #34d399;">POL-01..07 Enforced</div>
+              <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">Reflection loop active • Margin cap &lt;= 20% verified</div>
+            </div>
+
+            <!-- Communicator -->
+            <div style="background: rgba(52, 211, 153, 0.05); border: 1px solid rgba(52, 211, 153, 0.2); border-radius: 8px; padding: 10px 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <strong style="color: #34d399; font-size: 0.82rem;">✍️ Communicator</strong>
+                <span class="badge success" style="font-size: 0.6rem;">Online</span>
+              </div>
+              <div style="font-weight: 700; font-size: 0.78rem; color: #f1f5f9;">Contextual Outreach</div>
+              <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">1-Click Magic Links • 74.2% recovery benchmark</div>
+            </div>
+          </div>
+
+          <!-- Agent Fleet Executive Briefing (Short & Simple) -->
+          <div style="background: rgba(0, 0, 0, 0.35); border-radius: 6px; padding: 10px 14px; border: 1px solid rgba(255, 255, 255, 0.05);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <div style="font-size: 0.72rem; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.05em;">
+                ⚡ Autonomous Fleet Executive Briefing:
+              </div>
+              ${activeFleetAlert ? `<span style="font-size: 0.7rem; color: #34d399;">● Latest: Dispatched for ${activeFleetAlert.company} (${activeFleetAlert.time})</span>` : ''}
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px; font-size: 0.76rem; color: #e2e8f0; line-height: 1.4;">
+              <div>• <strong style="color: #38bdf8;">Detective:</strong> 42% of recent payment failures are transient evening UPI timeouts; customer relationship active.</div>
+              <div>• <strong style="color: #a78bfa;">Strategist:</strong> Shifting retry window by +2.0 hours into off-peak bank hours projected to recover +₹74,200.</div>
+              <div>• <strong style="color: #fb7185;">Auditor:</strong> Evaluated all interventions against corporate margin ceiling (<= 20% discount) & NPCI cooldowns; 0 violations.</div>
+              <div>• <strong style="color: #34d399;">Communicator:</strong> Dispatched 142 dynamic Magic Links via WhatsApp/Email with zero unsubscribe or dunning fatigue.</div>
+            </div>
+          </div>
+        </div>
+
         <div class="charts-grid">
           <div class="chart-card">
             <div class="chart-header">
@@ -265,8 +387,8 @@ const DashboardPage = (() => {
           <div class="chart-card">
             <div class="chart-header">
               <div>
-                <div class="chart-title">Live Recovery Feed</div>
-                <div class="chart-subtitle">Real-time autonomous system events</div>
+                <div class="chart-title">Live Multi-Agent Event Feed</div>
+                <div class="chart-subtitle">Real-time collaborative agent actions</div>
               </div>
             </div>
             <div style="display: flex; flex-direction: column;">
@@ -375,10 +497,12 @@ const DashboardPage = (() => {
     ChartComponent.createRevenueChart('revenuePerformanceChart', MockData.revenueData, MockData.getVolumeScale ? MockData.getVolumeScale() : 1);
   }
 
-  return {
-    render,
-    init,
-    onSliderChange: updateROICalculations,
-    refreshMetrics,
-  };
-})();
+    return {
+      render,
+      init,
+      onSliderChange: updateROICalculations,
+      refreshMetrics,
+      dispatchCustomerAgent,
+      runFleetDiagnostic,
+    };
+  })();

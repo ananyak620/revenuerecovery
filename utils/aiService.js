@@ -122,11 +122,224 @@ const AIService = (() => {
       policyStatus: 'POL-01 ⚠️ Limit Reached',
       erv: 3280,
       prob: 0.40,
+    },
+    voluntary_churn: {
+      id: 'voluntary_churn',
+      name: '🔁 Voluntary Churn (Price Resistance)',
+      tag: 'Self-Correction Loop',
+      tagType: 'primary',
+      amount: 8500,
+      payment_method: 'subscription',
+      failure_reason: 'customer_cancellation',
+      description: 'Customer cancelled recurring mandate due to price resistance. Strategist proposes 25% discount, Auditor catches margin cap violation (>20%) and triggers re-planning loop down to 15%.',
+      expectedAction: 'Offer 15% Courtesy Renewal',
+      policyStatus: 'POL-07 Margin Cap (1 Revision)',
+      erv: 6120,
+      prob: 0.72,
+    }
+  };
+
+  const churnPresets = {
+    critical_alpha: {
+      id: 'critical_alpha',
+      name: '🚨 Alpha Corp (Usage Collapse)',
+      tag: 'Critical Churn (94%)',
+      tagType: 'danger',
+      company: 'Alpha Corp',
+      mrr: 18500,
+      riskScore: 94,
+      keyDriver: 'Usage Collapse (-58%) & 7 Tickets',
+      expectedPlaybook: 'PB-PROACTIVE-ONBOARDING-RESCUE',
+      expectedAction: 'Executive Concierge Rescue',
+      guardrailRule: 'POL-07 Margin Cap <= 20%',
+      churnReason: 'Declining product usage (-58% over 30d), opened 7 support tickets',
+      description: 'Usage dropped 58%, 7 unresolved tickets, NPS 2/10. High probability of imminent contract cancellation.',
+      plan: 'Enterprise',
+      industry: 'SaaS'
+    },
+    dataverse_renewal: {
+      id: 'dataverse_renewal',
+      name: '💼 DataVerse Co (Renewal Window)',
+      tag: 'High Risk (78%)',
+      tagType: 'warning',
+      company: 'DataVerse Co',
+      mrr: 24900,
+      riskScore: 78,
+      keyDriver: 'Contract Expiration & Competitor Bake-off',
+      expectedPlaybook: 'PB-ANNUAL-LOCKIN-EXECUTIVE',
+      expectedAction: '10% Annual Lock-in Proposal',
+      guardrailRule: 'POL-07 Margin Cap <= 20%',
+      churnReason: 'Contract renewal approaching + Competitor evaluation detected',
+      description: 'Annual renewal in 18 days. Competitor bake-off detected in procurement.',
+      plan: 'Business',
+      industry: 'Analytics'
+    },
+    byteshift_inactive: {
+      id: 'byteshift_inactive',
+      name: '📉 ByteShift Labs (Zero Adoption)',
+      tag: 'Adoption Plateau',
+      tagType: 'info',
+      company: 'ByteShift Labs',
+      mrr: 12000,
+      riskScore: 65,
+      keyDriver: '16d Inactive & 18% Feature Adoption',
+      expectedPlaybook: 'PB-PROACTIVE-ONBOARDING-RESCUE',
+      expectedAction: 'Assign Success Engineer Hotline',
+      guardrailRule: 'POL-05 Dunning Frequency Cap',
+      churnReason: 'No team login in 16+ days; feature adoption stalled at 18%',
+      description: 'Workspace abandoned for 16 days. Onboarding drop-off detected.',
+      plan: 'Professional',
+      industry: 'DevTools'
+    },
+    pulsepoint_price: {
+      id: 'pulsepoint_price',
+      name: '🔁 PulsePoint (Price Resistance)',
+      tag: 'Self-Correction Loop',
+      tagType: 'primary',
+      company: 'PulsePoint Analytics',
+      mrr: 16500,
+      riskScore: 82,
+      keyDriver: 'Downgrade / Voluntary Price Sensitivity',
+      expectedPlaybook: 'PB-VOLUNTARY-PRICE-RESISTANCE',
+      expectedAction: 'Concede 15% Courtesy Renewal',
+      guardrailRule: 'POL-07 Margin Cap (25% -> 15% Reflection)',
+      churnReason: 'Downgrade request initiated citing price sensitivity',
+      description: 'User initiated voluntary downgrade. Strategist will propose 25% discount, Auditor margin cap will trigger reflection loop.',
+      plan: 'Enterprise',
+      industry: 'MarTech'
     }
   };
 
   function getPresets() {
     return presetScenarios;
+  }
+
+  function getChurnPresets() {
+    return churnPresets;
+  }
+
+  // Simulate a Proactive Retention Multi-Agent Mission
+  async function simulateChurnRetention(input) {
+    let customer = typeof input === 'string' ? churnPresets[input] : input;
+    if (!customer) customer = churnPresets.critical_alpha;
+
+    const company = customer.company || customer.name || 'Target Account';
+    const mrr = customer.mrr || 15000;
+    const riskScore = customer.riskScore || 85;
+    const reason = customer.churnReason || 'Declining usage pattern';
+    const isPriceSensitive = reason.toLowerCase().includes('price') || customer.id === 'pulsepoint_price' || reason.toLowerCase().includes('downgrade') || reason.toLowerCase().includes('budget');
+    const isHighValue = mrr > 20000;
+
+    // Backend attempt if online
+    if (backendConnected) {
+      try {
+        const res = await fetch(`${API_BASE}/api/recovery/churn-agent`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customer_id: customer.id || 'cus_target',
+            company: company,
+            mrr: mrr,
+            risk_score: riskScore,
+            churn_reason: reason,
+            auto_execute: false
+          })
+        });
+        if (res.ok) {
+          const backendData = await res.json();
+          if (backendData && backendData.stages) {
+            return backendData;
+          }
+        }
+      } catch (e) {
+        console.warn('Backend churn retention call failed, using client simulation', e);
+      }
+    }
+
+    let playbook = 'PB-RETENTION-ONBOARDING';
+    let action = 'schedule_csm_call';
+    let discount = 0;
+    let revisions = 0;
+    let hitlStatus = isHighValue ? 'PENDING_AE_REVIEW' : 'AUTONOMOUS_APPROVED';
+    let retainProb = Math.max(0.48, Math.min(0.92, (100 - riskScore) / 100 + 0.38));
+
+    if (isPriceSensitive) {
+      playbook = 'PB-VOLUNTARY-PRICE-RESISTANCE';
+      action = 'offer_annual_discount';
+      discount = 15;
+      revisions = 1;
+      retainProb = 0.76;
+    } else if (reason.toLowerCase().includes('usage') || reason.toLowerCase().includes('login') || reason.toLowerCase().includes('adoption')) {
+      playbook = 'PB-PROACTIVE-ONBOARDING-RESCUE';
+      action = 'assign_success_engineer';
+      retainProb = 0.82;
+    } else if (reason.toLowerCase().includes('renewal') || reason.toLowerCase().includes('competitor')) {
+      playbook = 'PB-ANNUAL-LOCKIN-EXECUTIVE';
+      action = 'executive_concierge_lockin';
+      discount = 10;
+      retainProb = 0.85;
+    } else if (reason.toLowerCase().includes('ticket') || reason.toLowerCase().includes('support')) {
+      playbook = 'PB-VIP-ESCALATION-SLA';
+      action = 'priority_support_hotline';
+      retainProb = 0.79;
+    }
+
+    const erv = Math.round(mrr * retainProb * 12);
+
+    const traces = [
+      `[Detective] Ingesting real-time behavioral telemetry for ${company} (MRR: ₹${mrr.toLocaleString()}, Risk: ${riskScore}/100)...`,
+      `[Detective] Root-cause forensics: "${reason}". Classification: ${isPriceSensitive ? 'VOLUNTARY INTENTIONAL CHURN' : 'PROACTIVE RETENTION THREAT'}.`,
+      `[Detective] Querying customer health score & NPS -> Feature adoption: ${customer.featureAdoption || 24}%, Support tickets: ${customer.supportTickets || 5}.`,
+      `[Strategist] Querying RAG Playbook Corpus -> Matched '${playbook}'.`
+    ];
+
+    if (isPriceSensitive) {
+      traces.push(`[Strategist] Proposing aggressive 25% courtesy discount on annual renewal to stop cancellation.`);
+      traces.push(`[Auditor] ❌ Policy Violation: POL-07-MARGIN-CAP (25% exceeds authorized corporate margin discount ceiling of 20%).`);
+      traces.push(`[Loop] 🔁 Self-Correction iteration #1: Auditor critiques discount size ➔ Re-planning with Strategist...`);
+      traces.push(`[Strategist] Revised retention package: 15% discount + 1-on-1 Quarterly Business Review with Lead Architect.`);
+      traces.push(`[Auditor] ✅ Guardrail Audit Passed: 15% discount <= 20% cap. LTV margin preserved.`);
+    } else if (isHighValue) {
+      traces.push(`[Strategist] High-value enterprise account (MRR: ₹${mrr.toLocaleString()}). Proposing Executive Concierge with VP of Product.`);
+      traces.push(`[Auditor] ✅ Compliance & SLA verified. Flagging for Human-in-the-Loop AE co-pilot review.`);
+      traces.push(`[HITL Gate] 🛑 Account Executive intervention flagged for approval.`);
+    } else {
+      traces.push(`[Strategist] Proposing targeted retention package: '${action.replace(/_/g, ' ').toUpperCase()}'.`);
+      traces.push(`[Auditor] ✅ Guardrail Audit Passed: Churn dunning frequency within limits. Approved.`);
+      traces.push(`[HITL Gate] Cleared for autonomous concierge dispatch.`);
+    }
+
+    traces.push(`[Communicator] Generated personalized retention concierge draft & dynamic calendar booking link.`);
+    traces.push(`[Communicator] Channel selected: ${isHighValue ? 'EXECUTIVE EMAIL + WHATSAPP' : 'EMAIL CONCIERGE'}. Delivered to account decision maker.`);
+
+    return {
+      company,
+      customer_id: customer.id || `cus_${Math.random().toString(36).substring(2, 8)}`,
+      mrr,
+      riskScore,
+      retainProb,
+      expected_ltv_saved: erv,
+      churn_category: isPriceSensitive ? 'voluntary_churn' : 'usage_drop',
+      hitl_status: hitlStatus,
+      revision_count: revisions,
+      final_action: action,
+      discount_offered: discount,
+      playbook,
+      diagnosis: `Detected ${reason.toLowerCase()}. Intervened with ${playbook}.`,
+      agent_trace: traces,
+      outreach: {
+        channel: isHighValue ? 'Executive Email + WhatsApp' : 'Email Concierge',
+        headline: isPriceSensitive ? 'Special Annual VIP Partnership Offer' : 'Dedicated Technical Advisory Session',
+        magic_link: `https://reviveai.io/concierge/${customer.id || 'acct'}?action=${action}`
+      },
+      stages: [
+        { name: 'Telemetry Detective', icon: '🕵️', status: 'completed', time: '16ms', details: `Forensics: ${reason}` },
+        { name: 'Retention Strategist', icon: '🧠', status: 'completed', time: '34ms', details: `Playbook: ${playbook}` },
+        { name: 'Retention Auditor', icon: '⚖️', status: 'completed', time: '12ms', details: revisions > 0 ? `Self-Corrected (1 Revision: Discount capped at 15%)` : 'POL-01..07 Guardrails Passed' },
+        { name: 'HITL Review Gate', icon: '🛑', status: isHighValue ? 'blocked' : 'completed', time: '3ms', details: hitlStatus },
+        { name: 'Concierge Communicator', icon: '✍️', status: 'completed', time: '22ms', details: 'VIP Concierge Outreach Dispatched' }
+      ]
+    };
   }
 
   // Process a recovery transaction via live FastAPI or mock
@@ -181,15 +394,86 @@ const AIService = (() => {
       }
     }
 
+    const txnId = 'sim_txn_' + Math.floor(Math.random() * 90000 + 10000);
+    const amt = parseFloat(amount);
+    const isHighValue = amt > 25000 || failure_reason === 'fraud_flag';
+    const isVoluntary = failure_reason === 'customer_cancellation';
+    const isExpired = failure_reason === 'card_expired';
+
+    let action = 'retry';
+    let hitlStatus = 'AUTONOMOUS_APPROVED';
+    let revisions = 0;
+    let category = 'involuntary_churn';
+    let prob = 0.84;
+
+    if (isHighValue) {
+      action = 'escalate';
+      hitlStatus = 'PENDING_OPERATOR_APPROVAL';
+      prob = 0.15;
+    } else if (isVoluntary) {
+      action = 'offer_alternative';
+      category = 'voluntary_churn';
+      revisions = 1;
+      prob = 0.72;
+    } else if (isExpired) {
+      action = 'update_payment';
+      prob = 0.60;
+    }
+
+    const traces = [
+      `[Detective] Fetching payment telemetry for ${txnId} (Method: ${payment_method.toUpperCase()}, Amount: ₹${amt.toLocaleString()})...`,
+      `[Detective] Calling CRM tool -> Found customer tenure 320d, LTV ₹${(amt * 4).toLocaleString()}.`,
+      `[Detective] Classification: ${category.toUpperCase()} — ${isVoluntary ? 'Intentional cancellation due to price sensitivity' : 'Payment rail interruption. User intent active'}.`,
+      `[Strategist] Consulting RAG Long-term Playbooks -> Matched ${isVoluntary ? 'PB-VOLUNTARY-PRICE-RESISTANCE' : isExpired ? 'PB-EXPIRED-CARD' : 'PB-TECH-TIMEOUT'}.`,
+    ];
+
+    if (isVoluntary) {
+      traces.push(`[Strategist] Proposed aggressive 25% courtesy discount with UPI AutoPay switch.`);
+      traces.push(`[Auditor] ❌ Plan REJECTED. Violation: POL-07-MARGIN-CAP (25% exceeds authorized 20% limit).`);
+      traces.push(`[Loop] 🔁 Self-Correction iteration #1: Feeding critique back to Strategist...`);
+      traces.push(`[Strategist] Adjusted discount down to compliant ceiling: 15.0%.`);
+      traces.push(`[Auditor] ✅ All guardrails, margin rules, and dunning caps passed.`);
+    } else if (isHighValue) {
+      traces.push(`[Strategist] High-ticket transaction (₹${amt.toLocaleString()} > ₹25,000). Proposing VIP Account Executive escalation.`);
+      traces.push(`[Auditor] ✅ Compliance review passed. Flagged for Human-in-the-Loop review.`);
+      traces.push(`[HITL Gate] 🛑 High-value / enterprise risk detected. Autonomous execution PAUSED.`);
+    } else {
+      traces.push(`[Strategist] Proposing bounded intervention: '${action}' (Delay: 2.0h).`);
+      traces.push(`[Auditor] ✅ Validated against POL-01..06 guardrails. Approved.`);
+      traces.push(`[HITL Gate] Standard transaction. Cleared for autonomous execution.`);
+    }
+
+    traces.push(`[Communicator] Generated dynamic Magic Link: https://pay.reviveai.io/magic/${txnId}?tok=${Math.random().toString(36).substring(2, 8)}${isVoluntary ? '&disc=15' : ''}`);
+    traces.push(`[Communicator] Prepared communication via ${isVoluntary ? 'EMAIL/WHATSAPP' : 'WHATSAPP'}: '${isVoluntary ? 'Exclusive 15% Renewal Concession' : 'Friendly Payment Update'}'.`);
+
     return {
       event_id: 'evt_' + Math.random().toString(36).substring(2, 9),
       status: 'completed',
-      message: 'Simulated failure ingested (standalone demo mode)',
-      transaction_id: 'sim_txn_' + Math.floor(Math.random() * 90000 + 10000),
+      message: 'Simulated failure ingested and processed by Multi-Agent Engine',
+      transaction_id: txnId,
       agent_decision: {
-        recovery_probability: 0.85,
-        policy_approved: true,
-        final_action: 'retry',
+        recovery_probability: prob,
+        expected_recovery_value: Math.round(amt * prob),
+        policy_approved: !isHighValue || action === 'escalate',
+        final_action: action,
+        churn_category: category,
+        churn_hypothesis: isVoluntary ? 'Customer intent churn due to price resistance.' : 'Transient payment rail handshake timeout.',
+        hitl_status: hitlStatus,
+        revision_count: revisions,
+        diagnosis: isVoluntary ? 'Voluntary cancellation mandate with price sensitivity.' : isHighValue ? 'High-value enterprise contract decline.' : 'Transient UPI PSP bank switch timeout.',
+        agent_trace: traces,
+        deliberation_log: [
+          { agent: 'Detective', status: 'completed', churn: category },
+          { agent: 'Strategist', proposed_action: action, revisions: revisions },
+          { agent: 'Auditor', approved: true },
+          { agent: 'HITL_Gate', status: hitlStatus },
+          { agent: 'Communicator', dispatched: true }
+        ],
+        outreach: {
+          channel: isVoluntary ? 'email_whatsapp' : 'whatsapp',
+          headline: isVoluntary ? 'Exclusive 15% Renewal Concession' : 'Friendly Payment Update',
+          magic_link: `https://pay.reviveai.io/magic/${txnId}?tok=tok_${Math.random().toString(36).substring(2, 8)}${isVoluntary ? '&disc=15' : ''}`,
+        }
       }
     };
   }
@@ -466,8 +750,10 @@ I continuously monitor your revenue recovery, payment gateway webhooks, and cust
     getLLMInfo,
     switchLLMProvider,
     getPresets,
+    getChurnPresets,
     processRecovery,
     simulateWebhook,
+    simulateChurnRetention,
     fetchEscalations,
     submitOverride,
     streamResponse,

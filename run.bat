@@ -7,10 +7,10 @@ echo ============================================================
 cd /d "%~dp0"
 
 :: Start FastAPI backend in background
-start "ReviveAI Backend (FastAPI :8000)" cmd /c ".\venv\Scripts\python.exe -m uvicorn src.api.main:app --host 0.0.0.0 --port 8000"
+start "ReviveAI Backend (FastAPI :8000)" cmd /k ".\venv\Scripts\python.exe -m uvicorn src.api.main:app --host 0.0.0.0 --port 8000"
 
 :: Start Frontend Server in background
-start "ReviveAI Frontend (:3000)" cmd /c "python -m http.server 3000"
+start "ReviveAI Frontend (:3000)" cmd /k ".\venv\Scripts\python.exe -m http.server 3000"
 
 :: Open browser after 2 seconds
 timeout /t 2 /nobreak >nul

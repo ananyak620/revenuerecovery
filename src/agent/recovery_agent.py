@@ -13,6 +13,7 @@ from src.ml.predict import get_predictor
 from src.ai.diagnosis import get_diagnosis_service
 from src.agent.policy_engine import get_policy_engine
 from src.agent.tools import AgentTools
+from src.agent.multi_agent_system import get_multi_agent_orchestrator
 from src.db.session import SessionLocal
 from src.db.models import Transaction, RecoveryDecision
 
@@ -23,15 +24,15 @@ def _utc_now() -> datetime:
 
 class RecoveryAgent:
     """
-    Autonomous Revenue Recovery Agent.
+    Autonomous Multi-Agent Revenue Recovery Orchestrator.
 
     Workflow:
-    1. Fetch transaction data
-    2. Get ML recovery prediction
-    3. Get LLM failure diagnosis
-    4. Check policy engine
-    5. Execute approved action (or escalate if blocked)
-    6. Log decision to audit trail
+    1. Detective Agent: Telemetry forensics & Churn classification
+    2. Strategist Agent: Recovery planning with RAG playbooks
+    3. Auditor Agent: Reflection loop & 6 hard stopping guardrails
+    4. HITL Gate: VIP / high-value risk pause
+    5. Communicator Agent: Hyper-personalized outreach & magic links
+    6. Action Execution: Audit trail & database persistence
     """
 
     def __init__(self):
@@ -39,6 +40,7 @@ class RecoveryAgent:
         self.diagnosis_service = get_diagnosis_service()
         self.policy_engine = get_policy_engine()
         self.tools = AgentTools()
+        self.multi_agent = get_multi_agent_orchestrator()
 
     async def process_payment(
         self, transaction_id: str, auto_execute: bool = False
@@ -134,10 +136,27 @@ class RecoveryAgent:
         print("\n  [6/6] Logging decision to audit trail...")
         audit_id = f"REC-{transaction_id[-6:]}-{_utc_now().strftime('%H%M%S')}"
 
+        # ─── Multi-Agent Execution & Deliberation ───────────────
+        mission = await self.multi_agent.execute_recovery_mission(
+            transaction_id=transaction_id,
+            auto_execute=auto_execute,
+            context_override=txn_context,
+        )
+
         decision_record = {
             "transaction_id": transaction_id,
             "audit_id": audit_id,
+            "mission_id": mission.get("mission_id"),
             "timestamp": _utc_now().isoformat(),
+
+            # Multi-Agent Forensics
+            "churn_category": mission.get("investigation", {}).get("churn_category", "involuntary_churn"),
+            "churn_hypothesis": mission.get("investigation", {}).get("churn_hypothesis", ""),
+            "hitl_status": mission.get("hitl_status", "AUTONOMOUS_APPROVED"),
+            "revision_count": mission.get("revision_count", 0),
+            "deliberation_log": mission.get("deliberation_log", []),
+            "agent_trace": mission.get("agent_trace", []),
+            "outreach": mission.get("outreach", {}),
 
             # ML
             "recovery_probability": prediction["recovery_probability"],
@@ -161,7 +180,7 @@ class RecoveryAgent:
 
             # Final
             "final_action": final_action,
-            "execution_result": execution_result,
+            "execution_result": execution_result or mission.get("execution_result"),
             "action_log": self.tools.get_action_log(),
 
             "status": "executed" if execution_result else "pending",
