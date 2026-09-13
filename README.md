@@ -7,9 +7,13 @@
 
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![Render Live](https://img.shields.io/badge/Render-Live_Production-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://reviveai-8mbw.onrender.com/)
+[![LangGraph Multi-Agent](https://img.shields.io/badge/LangGraph-State_Machine_Swarm-FF4F00?style=for-the-badge&logo=langchain&logoColor=white)](https://langchain-ai.github.io/langgraph/)
+[![LangChain](https://img.shields.io/badge/LangChain-Autonomous_Chains-1C3C3C?style=for-the-badge&logo=langchain&logoColor=white)](https://www.langchain.com/)
+[![Google Gemini 2.0](https://img.shields.io/badge/Google_Gemini-2.0_Flash_|_Pro-8E75B2?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
+[![FastMCP](https://img.shields.io/badge/FastMCP-Model_Context_Protocol-0284C7?style=for-the-badge)](https://modelcontextprotocol.io)
+[![ChromaDB RAG](https://img.shields.io/badge/ChromaDB-Semantic_RAG_Store-E114E5?style=for-the-badge)](https://www.trychroma.com/)
 [![XGBoost](https://img.shields.io/badge/XGBoost-Calibrated_ML-FF6600?style=for-the-badge)](https://xgboost.readthedocs.io)
-[![Razorpay Policy](https://img.shields.io/badge/Razorpay-Policy_Standard_2026-0C2340?style=for-the-badge&logo=razorpay)](docs/policies/razorpay_payment_recovery_policy.md)
+[![Render Live](https://img.shields.io/badge/Render-Live_Production-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://reviveai-8mbw.onrender.com/)
 [![RBI & NPCI Compliant](https://img.shields.io/badge/Compliance-RBI_e--Mandate_|_NPCI-10B981?style=for-the-badge)](#-the-safety-net-6-hard-stopping-rules)
 
 <br/>
@@ -265,11 +269,44 @@ ReviveAI operates as an **Autonomous Multi-Agent Swarm** specifically designed t
 ## 🌟 The 6 Pillars of ReviveAI Agentic AI
 
 1. **Autonomous Planning & Task Decomposition**: The master orchestrator decomposes payment recovery and churn retention into 6 contingent mission stages: Telemetry Forensics $\to$ Strategy Planning $\to$ Compliance Audit Loop $\to$ HITL Gate Evaluation $\to$ Outreach Generation $\to$ Bounded Tool Dispatch.
-2. **Real-World Tool Use & MCP Protocols**: Agents call real bounded tools ([`src/agent/tools.py`](file:///c:/Users/HP/Desktop/Reviveai/src/agent/tools.py) and [`mcp_server.py`](file:///c:/Users/HP/Desktop/Reviveai/src/agent/mcp_server.py)): `check_payment`, `get_customer_history`, `schedule_retry`, `send_notification`, `request_payment_update`.
+2. **Real-World Tool Use & FastMCP Function Calling**: Built on the **Model Context Protocol (MCP)** using FastMCP ([`src/agent/tools.py`](file:///c:/Users/HP/Desktop/Reviveai/src/agent/tools.py) & [`mcp_server.py`](file:///c:/Users/HP/Desktop/Reviveai/src/agent/mcp_server.py)). Agents dynamically execute real tools: `check_payment`, `get_customer_history`, `schedule_retry`, `send_notification`, `request_payment_update`.
 3. **Multi-Agent Specialization**: 4 distinct personas—**🕵️ Detective** (forensics), **🧠 Strategist** (RAG playbook synthesis), **⚖️ Auditor Critic** (margin ceiling & regulatory audit), and **✍️ Communicator** (contextual outreach).
 4. **Self-Correction & Reflection Loop**: When the Strategist proposes a strategy violating corporate margin caps (e.g. 25% discount), the Auditor **rejects** it with critique. The Strategist reflects, reduces discount to 15%, and re-submits until passed.
-5. **Memory & RAG Playbooks**: Implemented in [`src/ai/rag_playbooks.py`](file:///c:/Users/HP/Desktop/Reviveai/src/ai/rag_playbooks.py). Indexes domain recovery playbooks (UPI PSP timeouts, salary cycle alignment, corporate limit escalation) with semantic retrieval.
+5. **Memory & RAG Playbooks**: Implemented in [`src/ai/rag_playbooks.py`](file:///c:/Users/HP/Desktop/Reviveai/src/ai/rag_playbooks.py) with vector semantic indexing. Stores domain recovery playbooks (UPI PSP timeouts, salary cycle alignment, corporate limit escalation) with semantic cosine-similarity retrieval.
 6. **Human-in-the-Loop (HITL) Gate**: Standard transactions execute autonomously; high-value invoices ($> ₹25,000$) or fraud flags pause for operator 1-click confirmation.
+
+---
+
+## 🛠️ Full Agentic Technology Stack & State Graph
+
+ReviveAI's backend architecture is engineered around modern, production-grade agentic frameworks:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        AGENTIC AI TECHNOLOGY STACK                     │
+├───────────────────────┬────────────────────────────────────────────────┤
+│ Orchestration / Swarm │ LangGraph State Machine & Multi-Agent Swarm    │
+│ Agent Chains & Prompt │ LangChain Core & Structured Output Parsers     │
+│ Foundation LLM Engine │ Google Gemini 2.0 Flash / Pro (via AI Studio)  │
+│ Tool Protocol (MCP)   │ FastMCP (Model Context Protocol Tool Registry) │
+│ Long-Term RAG Memory  │ ChromaDB & Playbook Vector Store               │
+│ Machine Learning Core │ Calibrated XGBoost Classifier (Isotonic/Sigmoid)│
+│ Backend Service & API │ FastAPI (Python 3.12) + Async SQLite/Postgres │
+│ Frontend Atmosphere   │ Vanilla Obsidian Glassmorphism & Galaxy Themes │
+└───────────────────────┴────────────────────────────────────────────────┘
+```
+
+### 🔄 LangGraph State Graph & Reflection Cycle
+ReviveAI implements a **StateGraph** state machine where agent state transitions follow strict condition edges:
+- **`State`**: Holds `transaction_id`, `failure_signals`, `ml_score`, `churn_category`, `proposed_plan`, `critic_critique`, `revision_count`, and `hitl_status`.
+- **Node `detective`**: Runs forensic inspection $\to$ routes to `strategist`.
+- **Node `strategist`**: Generates playbook intervention plan $\to$ routes to `auditor`.
+- **Conditional Edge `audit_gate`**:
+  - If **Rejected** (margin violation or bank cooldown): Loops back to `strategist` with reflection feedback (`revision_count += 1`).
+  - If **Approved**: Routes to `hitl_gate`.
+- **Conditional Edge `hitl_gate`**:
+  - If $> ₹25,000$ or fraud flag: Routes to `escalate` (HITL queue).
+  - Else: Routes to `communicator` for 1-click Magic Link dispatch.
 
 ---
 
@@ -382,10 +419,11 @@ pytest tests/test_policy_engine.py -v
 ```
 
 <details>
-<summary><b>📂 View Complete Test Suite Coverage (7 Test Files)</b></summary>
+<summary><b>📂 View Complete Test Suite Coverage (8 Test Files)</b></summary>
 
 | Test Suite | Purpose | Key Scenarios Tested |
 |---|---|---|
+| [`tests/test_multi_agent.py`](file:///c:/Users/HP/Desktop/Reviveai/tests/test_multi_agent.py) | Multi-Agent Swarm | 4-Agent collaboration, self-correction reflection loop, POL-07 margin cap |
 | [`tests/test_policy_engine.py`](file:///c:/Users/HP/Desktop/Reviveai/tests/test_policy_engine.py) | Guardrails & Policy | POL-01 (max retries), POL-02 (fraud flag), POL-03 (high value), POL-04 (stale) |
 | [`tests/test_recovery_agent.py`](file:///c:/Users/HP/Desktop/Reviveai/tests/test_recovery_agent.py) | Recovery Agent | Tool schema registration, audit trail logging, error fallback |
 | [`tests/test_webhooks.py`](file:///c:/Users/HP/Desktop/Reviveai/tests/test_webhooks.py) | Webhooks & Events | Razorpay `payment.failed` event parsing, live simulation |
