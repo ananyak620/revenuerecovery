@@ -83,9 +83,12 @@ const App = (() => {
       </header>
     `;
 
+    // Set dynamic page theme attribute on body and main
+    document.body.setAttribute('data-page', currentPage);
+
     appEl.innerHTML = `
       ${Sidebar.render(currentPage)}
-      <main class="main-content">
+      <main class="main-content" data-page="${currentPage}">
         ${topHeaderHtml}
         <div class="page-content-wrapper">
           ${pageModule.render()}

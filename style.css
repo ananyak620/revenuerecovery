@@ -2195,3 +2195,157 @@ input[type="range"]::-webkit-slider-thumb:hover {
   box-shadow: 0 6px 24px rgba(147, 51, 234, 0.18);
 }
 
+/* ==========================================================================
+   TAB-SPECIFIC IMMERSIVE THEMES
+   1. Dashboard: Cosmic Deep Galaxy Nebula (Electric Blues, Violets & Stardust)
+   2. Churn Prediction: Emerald Cash Vault & High-LTV Gold (Greens, Mint & Gold)
+   3. Payment Recovery: High-Voltage Cyber Electric Plasma (Cyan, Cobalt & Indigo)
+   4. Smart Dunning: Sunset Amber & Rose Gold Resonance (Amber, Coral & Rose)
+   5. Dynamic Pricing: Deep Royal Purple & Diamond Obsidian
+   ========================================================================== */
+
+/* --- 1. CHURN PREDICTION: EMERALD CASH VAULT & GOLD THEME --- */
+body[data-page='churn'] {
+  background-color: #04120a;
+  background-image:
+    radial-gradient(circle at 18% 18%, rgba(16, 185, 129, 0.25) 0%, transparent 45%),
+    radial-gradient(circle at 82% 28%, rgba(234, 179, 8, 0.18) 0%, transparent 48%),
+    radial-gradient(circle at 50% 65%, rgba(5, 150, 105, 0.18) 0%, transparent 55%),
+    radial-gradient(circle at 20% 85%, rgba(52, 211, 153, 0.16) 0%, transparent 50%),
+    radial-gradient(circle at 80% 85%, rgba(245, 158, 11, 0.14) 0%, transparent 45%),
+    radial-gradient(ellipse 80% 40% at 50% 0%, rgba(16, 185, 129, 0.20) 0%, transparent 70%);
+}
+
+body[data-page='churn']::before {
+  background-image:
+    radial-gradient(1px 1px at 30px 40px, rgba(52, 211, 153, 0.7), transparent),
+    radial-gradient(1.5px 1.5px at 160px 80px, rgba(251, 191, 36, 0.8), transparent),
+    radial-gradient(1px 1px at 320px 200px, rgba(16, 185, 129, 0.65), transparent),
+    radial-gradient(1.5px 1.5px at 500px 90px, rgba(234, 179, 8, 0.7), transparent),
+    radial-gradient(1px 1px at 680px 260px, rgba(52, 211, 153, 0.6), transparent),
+    radial-gradient(1px 1px at 880px 140px, rgba(251, 191, 36, 0.65), transparent),
+    linear-gradient(rgba(16, 185, 129, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 185, 129, 0.04) 1px, transparent 1px);
+}
+
+body[data-page='churn'] .card,
+body[data-page='churn'] .chart-card,
+body[data-page='churn'] .data-table-container {
+  background: rgba(5, 22, 14, 0.82);
+  border-color: rgba(16, 185, 129, 0.26);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6), 0 0 25px rgba(16, 185, 129, 0.10);
+}
+
+body[data-page='churn'] .card:hover,
+body[data-page='churn'] .chart-card:hover {
+  border-color: rgba(52, 211, 153, 0.45);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.7), 0 0 30px rgba(16, 185, 129, 0.18);
+}
+
+body[data-page='churn'] .preset-card {
+  background: rgba(6, 28, 18, 0.78);
+  border-color: rgba(16, 185, 129, 0.22);
+}
+
+body[data-page='churn'] .preset-card:hover,
+body[data-page='churn'] .preset-card.active {
+  border-color: rgba(52, 211, 153, 0.55);
+  box-shadow: 0 8px 26px rgba(16, 185, 129, 0.25);
+}
+
+/* --- 2. PAYMENT RECOVERY: HIGH-VOLTAGE ELECTRIC COBALT PLASMA THEME --- */
+body[data-page='recovery'] {
+  background-color: #030a1c;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(14, 165, 233, 0.26) 0%, transparent 45%),
+    radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.24) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(2, 132, 199, 0.20) 0%, transparent 55%),
+    radial-gradient(circle at 15% 80%, rgba(6, 182, 212, 0.18) 0%, transparent 45%),
+    radial-gradient(circle at 85% 85%, rgba(147, 51, 234, 0.18) 0%, transparent 45%),
+    radial-gradient(ellipse 90% 50% at 50% 0%, rgba(14, 165, 233, 0.24) 0%, transparent 70%);
+}
+
+body[data-page='recovery']::before {
+  background-image:
+    radial-gradient(1px 1px at 30px 40px, rgba(56, 189, 248, 0.8), transparent),
+    radial-gradient(1.5px 1.5px at 180px 80px, rgba(165, 180, 252, 0.8), transparent),
+    radial-gradient(1px 1px at 360px 190px, rgba(14, 165, 233, 0.7), transparent),
+    radial-gradient(1.5px 1.5px at 540px 110px, rgba(147, 51, 234, 0.7), transparent),
+    radial-gradient(1px 1px at 720px 270px, rgba(56, 189, 248, 0.65), transparent),
+    linear-gradient(rgba(14, 165, 233, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(14, 165, 233, 0.04) 1px, transparent 1px);
+}
+
+body[data-page='recovery'] .card,
+body[data-page='recovery'] .chart-card,
+body[data-page='recovery'] .data-table-container {
+  background: rgba(7, 18, 40, 0.82);
+  border-color: rgba(14, 165, 233, 0.28);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6), 0 0 25px rgba(14, 165, 233, 0.12);
+}
+
+body[data-page='recovery'] .card:hover,
+body[data-page='recovery'] .chart-card:hover {
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.7), 0 0 35px rgba(14, 165, 233, 0.22);
+}
+
+body[data-page='recovery'] .preset-card {
+  background: rgba(8, 22, 48, 0.8);
+  border-color: rgba(14, 165, 233, 0.22);
+}
+
+body[data-page='recovery'] .preset-card:hover,
+body[data-page='recovery'] .preset-card.active {
+  border-color: rgba(56, 189, 248, 0.6);
+  box-shadow: 0 8px 26px rgba(14, 165, 233, 0.3);
+}
+
+/* --- 3. SMART DUNNING: SUNSET AMBER & CORAL RETENTION THEME --- */
+body[data-page='dunning'] {
+  background-color: #140808;
+  background-image:
+    radial-gradient(circle at 15% 15%, rgba(245, 158, 11, 0.22) 0%, transparent 45%),
+    radial-gradient(circle at 85% 25%, rgba(244, 63, 94, 0.22) 0%, transparent 50%),
+    radial-gradient(circle at 50% 60%, rgba(217, 119, 6, 0.18) 0%, transparent 55%),
+    radial-gradient(circle at 75% 85%, rgba(239, 68, 68, 0.16) 0%, transparent 45%),
+    radial-gradient(ellipse 90% 50% at 50% 0%, rgba(251, 146, 60, 0.20) 0%, transparent 70%);
+}
+
+body[data-page='dunning'] .card,
+body[data-page='dunning'] .chart-card,
+body[data-page='dunning'] .data-table-container {
+  background: rgba(28, 14, 14, 0.82);
+  border-color: rgba(245, 158, 11, 0.24);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6), 0 0 25px rgba(245, 158, 11, 0.10);
+}
+
+/* --- 4. DYNAMIC PRICING: ROYAL PURPLE & DIAMOND THEME --- */
+body[data-page='pricing'] {
+  background-color: #0d0617;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(168, 85, 247, 0.25) 0%, transparent 45%),
+    radial-gradient(circle at 80% 25%, rgba(147, 51, 234, 0.22) 0%, transparent 50%),
+    radial-gradient(circle at 50% 60%, rgba(192, 132, 252, 0.16) 0%, transparent 55%),
+    radial-gradient(circle at 75% 85%, rgba(236, 72, 153, 0.18) 0%, transparent 45%),
+    radial-gradient(ellipse 90% 50% at 50% 0%, rgba(168, 85, 247, 0.22) 0%, transparent 70%);
+}
+
+body[data-page='pricing'] .card,
+body[data-page='pricing'] .chart-card,
+body[data-page='pricing'] .data-table-container {
+  background: rgba(22, 11, 38, 0.82);
+  border-color: rgba(168, 85, 247, 0.25);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6), 0 0 25px rgba(168, 85, 247, 0.12);
+}
+
+/* --- 5. AI CHAT COPILOT: CYBER MATRIX THEME --- */
+body[data-page='chat'] {
+  background-color: #030f14;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(6, 182, 212, 0.25) 0%, transparent 45%),
+    radial-gradient(circle at 80% 25%, rgba(16, 185, 129, 0.20) 0%, transparent 50%),
+    radial-gradient(circle at 50% 60%, rgba(14, 165, 233, 0.18) 0%, transparent 55%);
+}
+
+
