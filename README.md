@@ -208,47 +208,82 @@ ReviveAI immutably logs 100% of decisions in the database with cryptographic tra
 
 ---
 
-## 🏗️ How It Works
+## 🏛️ Autonomous Multi-Agent Swarm Architecture
+
+ReviveAI operates as an **Autonomous Multi-Agent Swarm** specifically designed to satisfy every pillar of modern Agentic AI:
 
 ```
-                        Razorpay Webhook (payment.failed)
+                        [ Ingestion / Webhook Event ]
                                       │
                                       ▼
                         ┌───────────────────────────┐
-                        │   Context Aggregation     │ (Customer LTV, failure history)
+                        │   Orchestrator Agent      │ ◄── Dynamic Task Decomposition
                         └─────────────┬─────────────┘
                                       │
-                     ┌────────────────┴────────────────┐
-                     ▼                                 ▼
-         ┌───────────────────────┐         ┌───────────────────────┐
-         │ Calibrated XGBoost ML │         │  Multi-LLM Diagnosis  │
-         │  P(recovery | action) │         │ (Gemini / Groq / GPT) │
-         └───────────┬───────────┘         └───────────┬───────────┘
-                     │                                 │
-                     └────────────────┬────────────────┘
                                       ▼
-                        ┌───────────────────────────┐
-                        │ Deterministic Policy Engine│ (6 Golden Guardrails)
-                        └─────────────┬─────────────┘
+             ┌──────────────────────────────────────────────────┐
+             │ 🕵️ 1. Forensic Detective Agent                   │
+             │    • Tools: check_payment, get_customer_history  │
+             │    • Classifies: Involuntary vs Voluntary Churn  │
+             │    • Queries Calibrated XGBoost recovery score   │
+             └────────────────────────┬─────────────────────────┘
                                       │
-                     ┌────────────────┴────────────────┐
-                     ▼                                 ▼
-           [ Guardrails Passed ]             [ Guardrail Blocked ]
-                     │                                 │
-                     ▼                                 ▼
-         ┌───────────────────────┐         ┌───────────────────────┐
-         │ Bounded Action Rails  │         │ Human-in-the-Loop     │
-         │ • Off-Peak Cooldown   │         │ • High-Ticket Queue   │
-         │ • Razorpay Magic Link │         │ • Fraud Quarantine    │
-         │ • UPI AutoPay Switch  │         │ • Manual Override API │
-         └───────────┬───────────┘         └───────────┬───────────┘
-                     │                                 │
-                     └────────────────┬────────────────┘
-                                      ▼
-                        ┌───────────────────────────┐
-                        │   Forensic Audit Trail    │ (recovery_decisions)
-                        └───────────────────────────┘
+                                      ▼ [Failure Context + Churn Category]
+             ┌──────────────────────────────────────────────────┐
+             │ 🧠 2. Recovery Strategist Agent                  │
+             │    • Queries RAG Long-term Recovery Playbooks    │
+             │    • Formulates plan: retry, discount %, rail    │
+             └───────────────────▲────────┬─────────────────────┘
+                                 │        │ [Proposed Intervention Plan]
+        🔁 REFLECTION &         │        ▼
+        SELF-CORRECTION LOOP     │  ┌──────────────────────────────────────────────┐
+        (Revises plan based on   └──┤ ⚖️ 3. Policy Auditor Agent (The Critic)      │
+         critic feedback)           │    • Enforces 7 RBI/NPCI rules + margin cap  │
+                                    │    • Evaluates CAN-SPAM & customer fatigue   │
+                                    │    • REJECTS with critique or APPROVES       │
+                                    └─────────────────────┬────────────────────────┘
+                                                          │ [APPROVED]
+                                                          ▼
+                                    ┌──────────────────────────────────────────────┐
+                                    │ 🛑 HITL Gate (Human-in-the-Loop)             │
+                                    │    • High-Value VIP (> ₹25k): Pauses for OK  │
+                                    │    • Standard: Passes to Autonomous Outreach │
+                                    └─────────────────────┬────────────────────────┘
+                                                          │ [Standard / Approved]
+                                                          ▼
+             ┌──────────────────────────────────────────────────┐
+             │ ✍️ 4. Contextual Outreach Agent (Communicator)   │
+             │    • Uses RAG templates + customer CRM history   │
+             │    • Generates hyper-personalized WhatsApp/Email │
+             │    • Embeds dynamic Magic Link / Portal Token    │
+             │    • Calls notification tool to dispatch         │
+             └──────────────────────────────────────────────────┘
 ```
+
+---
+
+## 🌟 The 6 Pillars of ReviveAI Agentic AI
+
+1. **Autonomous Planning & Task Decomposition**: The master orchestrator decomposes payment recovery and churn retention into 6 contingent mission stages: Telemetry Forensics $\to$ Strategy Planning $\to$ Compliance Audit Loop $\to$ HITL Gate Evaluation $\to$ Outreach Generation $\to$ Bounded Tool Dispatch.
+2. **Real-World Tool Use & MCP Protocols**: Agents call real bounded tools ([`src/agent/tools.py`](file:///c:/Users/HP/Desktop/Reviveai/src/agent/tools.py) and [`mcp_server.py`](file:///c:/Users/HP/Desktop/Reviveai/src/agent/mcp_server.py)): `check_payment`, `get_customer_history`, `schedule_retry`, `send_notification`, `request_payment_update`.
+3. **Multi-Agent Specialization**: 4 distinct personas—**🕵️ Detective** (forensics), **🧠 Strategist** (RAG playbook synthesis), **⚖️ Auditor Critic** (margin ceiling & regulatory audit), and **✍️ Communicator** (contextual outreach).
+4. **Self-Correction & Reflection Loop**: When the Strategist proposes a strategy violating corporate margin caps (e.g. 25% discount), the Auditor **rejects** it with critique. The Strategist reflects, reduces discount to 15%, and re-submits until passed.
+5. **Memory & RAG Playbooks**: Implemented in [`src/ai/rag_playbooks.py`](file:///c:/Users/HP/Desktop/Reviveai/src/ai/rag_playbooks.py). Indexes domain recovery playbooks (UPI PSP timeouts, salary cycle alignment, corporate limit escalation) with semantic retrieval.
+6. **Human-in-the-Loop (HITL) Gate**: Standard transactions execute autonomously; high-value invoices ($> ₹25,000$) or fraud flags pause for operator 1-click confirmation.
+
+---
+
+## 🎨 Immersive Tab-Specific Thematic Worlds
+
+Every primary tab in ReviveAI features its own tailored visual identity and atmosphere:
+
+| Tab / View | Visual Theme | Dominant Palette | Interactive Experience |
+| :--- | :--- | :--- | :--- |
+| **🌌 Autonomous Dashboard** | Cosmic Deep Galaxy Nebula | `#060814`, Violet Stardust, Cyan Bursts | Autonomous fleet status workspace, live agent event stream, and Razorpay ROI calculator. |
+| **💸 Churn Prediction** | Emerald Cash Vault & Gold Aura | `#04120a`, Mint Green, High-LTV Gold | 4-Agent proactive retention swarm, 4 scenario sandboxes, 5-stage pipeline drawer, and `🤖 Retain Account` actions. |
+| **⚡ Payment Recovery** | High-Voltage Electric Cobalt Plasma | `#030a1c`, Electric Cyan, Cobalt & Indigo | Live Multi-Agent Deliberation Terminal, short & simple executive summary, and HITL review queue. |
+| **🌅 Smart Dunning** | Sunset Amber & Coral Resonance | `#140808`, Amber, Coral, Rose Gold | Customer fatigue tracking and empathetic cadences. |
+| **💎 Dynamic Pricing** | Royal Purple & Obsidian Diamond | `#0d0617`, Royal Amethyst, Lavender | Margin-protective pricing and plan elasticity. |
 
 ---
 
@@ -379,12 +414,14 @@ Reviveai/
 │   │   ├── evaluate.py           # Batch evaluation & Expected Recovery Value (ERV)
 │   │   └── predict.py            # Real-time inference engine with fallback logic
 │   ├── ai/
-│   │   ├── llm.py                # Multi-provider client (Gemini, Groq, OpenAI)
-│   │   ├── prompts.py            # System prompts with payment failure taxonomy
+│   │   ├── llm_provider.py       # Multi-provider client (Gemini 2.0/Flash, Groq, OpenAI)
+│   │   ├── prompts.py            # Failure taxonomy & 4-agent persona prompt suites
+│   │   ├── rag_playbooks.py      # Domain recovery playbooks & semantic retrieval store
 │   │   └── rag.py                # ChromaDB vector store for recovery playbooks
 │   ├── agent/
+│   │   ├── multi_agent_system.py # 4-Agent Autonomous Swarm (Detective, Strategist, Auditor, Communicator)
 │   │   ├── recovery_agent.py     # Main autonomous orchestrator
-│   │   ├── policy_engine.py      # Deterministic guardrail engine (6 golden rules)
+│   │   ├── policy_engine.py      # Deterministic guardrail engine (POL-01..07)
 │   │   ├── tools.py              # Bounded action tools (schedule_retry, magic_link, escalate)
 │   │   └── mcp_server.py         # FastMCP server exposing tools to LLM clients
 │   └── api/
@@ -392,13 +429,12 @@ Reviveai/
 │       ├── schemas.py            # Pydantic validation schemas
 │       └── routes/
 │           ├── webhooks.py       # Razorpay webhook ingestion & live simulator
-│           ├── recovery.py       # Recovery queue, predictions, HITL overrides
+│           ├── recovery.py       # Recovery queue, agent-mission, churn-agent, HITL overrides
 │           ├── transactions.py   # Historical transactions & detail views
 │           └── dashboard.py      # Aggregated metrics & financial analytics
-├── docs/
-│   └── policies/
-│       └── razorpay_payment_recovery_policy.md   # Official standard document
-└── tests/                        # 7 automated test suites (pytest)
+├── demo_agent.py                 # Standalone terminal CLI runner for the 4-agent swarm
+├── pages/                        # Thematic UI Pages (Galaxy Dashboard, Emerald Churn, Cobalt Recovery)
+├── tests/                        # 8 automated test suites (pytest + test_multi_agent.py)
 ```
 
 ---
