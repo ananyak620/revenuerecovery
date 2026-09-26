@@ -10,6 +10,7 @@ Supports seamless switching and cascading fallback across:
 import abc
 import asyncio
 import json
+import os
 import time
 import urllib.request
 import urllib.error
@@ -40,11 +41,13 @@ class BaseLLMProvider(abc.ABC):
 class GeminiProvider(BaseLLMProvider):
     """Google Gemini cloud LLM provider via direct Generative Language REST API."""
 
-    def __init__(self, model_name: str = "gemini-3.6-flash"):
+    def __init__(self, model_name: str = "gemini-2.0-flash"):
         super().__init__("gemini", model_name)
         self.api_key = settings.gemini_api_key
 
     def is_available(self) -> bool:
+        if os.environ.get("PYTEST_CURRENT_TEST") and not os.environ.get("ENABLE_LIVE_LLM_TESTS"):
+            return False
         return bool(self.api_key or settings.gemini_api_key)
 
     async def generate_text(self, prompt: str, system_instruction: Optional[str] = None) -> str:
@@ -251,9 +254,11 @@ class OpenAICompatibleProvider(BaseLLMProvider):
         self.api_key = api_key or settings.openai_api_key or "local"
 
     def is_available(self) -> bool:
+        if os.environ.get("PYTEST_CURRENT_TEST") and not os.environ.get("ENABLE_LIVE_LLM_TESTS"):
+            return False
         if self.provider_name == "ollama":
-            return True
-        return bool(self.api_key and self.api_key != "local") or bool(self.base_url)
+            return bool(settings.llm_provider == "ollama")
+        return bool(self.api_key and self.api_key != "local" and self.api_key.strip())
 
     async def generate_diagnosis(self, context: Dict[str, Any]) -> Dict[str, Any]:
         prompt = DIAGNOSIS_PROMPT.format(**context)

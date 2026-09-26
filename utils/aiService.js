@@ -142,69 +142,69 @@ const AIService = (() => {
   const churnPresets = {
     critical_alpha: {
       id: 'critical_alpha',
-      name: '🚨 Alpha Corp (Usage Collapse)',
-      tag: 'Critical Churn (94%)',
+      name: '🚨 Sudden Drop in Usage',
+      tag: 'Critical Inactivity',
       tagType: 'danger',
-      company: 'Alpha Corp',
+      company: 'Acme Corp (Drop in Usage)',
       mrr: 18500,
       riskScore: 94,
-      keyDriver: 'Usage Collapse (-58%) & 7 Tickets',
+      keyDriver: '58% Drop in Activity & Open Tickets',
       expectedPlaybook: 'PB-PROACTIVE-ONBOARDING-RESCUE',
-      expectedAction: 'Executive Concierge Rescue',
+      expectedAction: 'Proactive Support Rescue',
       guardrailRule: 'POL-07 Margin Cap <= 20%',
-      churnReason: 'Declining product usage (-58% over 30d), opened 7 support tickets',
-      description: 'Usage dropped 58%, 7 unresolved tickets, NPS 2/10. High probability of imminent contract cancellation.',
+      churnReason: 'Customer logins fell 58% and 7 support tickets remain unresolved',
+      description: 'Logins fell by 58% and 7 support tickets remain open. High risk of immediate cancellation.',
       plan: 'Enterprise',
       industry: 'SaaS'
     },
     dataverse_renewal: {
       id: 'dataverse_renewal',
-      name: '💼 DataVerse Co (Renewal Window)',
-      tag: 'High Risk (78%)',
+      name: '💼 Contract Renewal at Risk',
+      tag: 'Upcoming Renewal',
       tagType: 'warning',
-      company: 'DataVerse Co',
+      company: 'Global Enterprise (Renewal)',
       mrr: 24900,
       riskScore: 78,
-      keyDriver: 'Contract Expiration & Competitor Bake-off',
+      keyDriver: 'Contract Expiring & Shopping Around',
       expectedPlaybook: 'PB-ANNUAL-LOCKIN-EXECUTIVE',
-      expectedAction: '10% Annual Lock-in Proposal',
+      expectedAction: '10% Annual Renewal Offer',
       guardrailRule: 'POL-07 Margin Cap <= 20%',
-      churnReason: 'Contract renewal approaching + Competitor evaluation detected',
-      description: 'Annual renewal in 18 days. Competitor bake-off detected in procurement.',
+      churnReason: 'Annual contract expires in 18 days with competitor evaluation detected',
+      description: 'Annual contract expires in 18 days. Customer is comparing other competitor tools.',
       plan: 'Business',
       industry: 'Analytics'
     },
     byteshift_inactive: {
       id: 'byteshift_inactive',
-      name: '📉 ByteShift Labs (Zero Adoption)',
-      tag: 'Adoption Plateau',
+      name: '📉 Zero Team Adoption',
+      tag: 'Inactive Onboarding',
       tagType: 'info',
-      company: 'ByteShift Labs',
+      company: 'Startup Team (Zero Logins)',
       mrr: 12000,
       riskScore: 65,
-      keyDriver: '16d Inactive & 18% Feature Adoption',
+      keyDriver: '16 Days Inactive & Incomplete Setup',
       expectedPlaybook: 'PB-PROACTIVE-ONBOARDING-RESCUE',
-      expectedAction: 'Assign Success Engineer Hotline',
+      expectedAction: 'Onboarding Specialist Call',
       guardrailRule: 'POL-05 Dunning Frequency Cap',
-      churnReason: 'No team login in 16+ days; feature adoption stalled at 18%',
-      description: 'Workspace abandoned for 16 days. Onboarding drop-off detected.',
+      churnReason: 'No team member logged in for 16+ days; setup stopped at 18% completion',
+      description: 'No one from the team logged in for over 16 days. Setup stopped at 18% completion.',
       plan: 'Professional',
       industry: 'DevTools'
     },
     pulsepoint_price: {
       id: 'pulsepoint_price',
-      name: '🔁 PulsePoint (Price Resistance)',
+      name: '🔁 Price Resistance & Downgrade',
       tag: 'Self-Correction Loop',
       tagType: 'primary',
-      company: 'PulsePoint Analytics',
+      company: 'Growing Business (High Cost)',
       mrr: 16500,
       riskScore: 82,
-      keyDriver: 'Downgrade / Voluntary Price Sensitivity',
+      keyDriver: 'Customer Citing Price Too High',
       expectedPlaybook: 'PB-VOLUNTARY-PRICE-RESISTANCE',
-      expectedAction: 'Concede 15% Courtesy Renewal',
+      expectedAction: '15% Loyalty Discount',
       guardrailRule: 'POL-07 Margin Cap (25% -> 15% Reflection)',
-      churnReason: 'Downgrade request initiated citing price sensitivity',
-      description: 'User initiated voluntary downgrade. Strategist will propose 25% discount, Auditor margin cap will trigger reflection loop.',
+      churnReason: 'Customer requested plan downgrade citing subscription price is too high',
+      description: 'Customer requested a downgrade because the price feels high. AI balances discount with margin.',
       plan: 'Enterprise',
       industry: 'MarTech'
     }
@@ -702,6 +702,31 @@ I continuously monitor your revenue recovery, payment gateway webhooks, and cust
   }
 
   async function streamResponse(query, onChunk, onComplete) {
+    // 1. Try live FastAPI LangChain Agent (/agent/query)
+    try {
+      const res = await fetch(`${API_BASE}/agent/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const text = data.response || 'Agent completed analysis.';
+        const words = text.split(' ');
+        let current = '';
+        for (let i = 0; i < words.length; i++) {
+          current += (i > 0 ? ' ' : '') + words[i];
+          onChunk(current);
+          await new Promise(r => setTimeout(r, 6 + Math.random() * 12));
+        }
+        if (onComplete) onComplete({ text, tools_called: data.tools_called });
+        return;
+      }
+    } catch (e) {
+      console.warn('Live agent query failed, using local fallback:', e);
+    }
+
+    // 2. Fallback to local pattern matching if backend is offline
     const response = getResponse(query);
     const text = response.text;
     const words = text.split(' ');

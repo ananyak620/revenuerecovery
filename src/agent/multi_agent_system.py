@@ -666,6 +666,41 @@ class MultiAgentOrchestrator:
             "execution_result": execution_result,
         }
 
+    async def orchestrate(
+        self,
+        transaction_id: str,
+        auto_execute: bool = False,
+        context_override: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Alias for execute_recovery_mission providing structured agent_decision payload."""
+        mission = await self.execute_recovery_mission(
+            transaction_id=transaction_id,
+            auto_execute=auto_execute,
+            context_override=context_override,
+        )
+        agent_decision = {
+            "transaction_id": transaction_id,
+            "final_action": mission["final_action"],
+            "recovery_probability": mission["investigation"]["recovery_probability"],
+            "expected_recovery_value": mission["investigation"]["expected_recovery_value"],
+            "churn_category": mission["investigation"]["churn_category"],
+            "churn_hypothesis": mission["investigation"]["churn_hypothesis"],
+            "diagnosis": mission["investigation"]["diagnosis"],
+            "hitl_status": mission["hitl_status"],
+            "revision_count": mission["revision_count"],
+            "policy_approved": True,
+            "discount_percent": mission["discount_percent"],
+            "delay_hours": mission["delay_hours"],
+            "outreach": mission["outreach"],
+            "agent_trace": mission["agent_trace"],
+            "deliberation_log": mission["deliberation_log"],
+        }
+        return {
+            **mission,
+            "agent_decision": agent_decision,
+        }
+
+
 
 # Global singleton
 _orchestrator: Optional[MultiAgentOrchestrator] = None

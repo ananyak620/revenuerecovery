@@ -6,8 +6,10 @@ Each tool is a callable that the agent can invoke during its workflow.
 Tools follow a consistent interface for logging and auditability.
 """
 
+import concurrent.futures
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Dict, List, Optional
+from pydantic import BaseModel, Field, ValidationError
 
 from src.db.models import (
     Customer,
@@ -17,6 +19,111 @@ from src.db.models import (
     Transaction,
 )
 from src.db.session import SessionLocal
+
+
+# ---------------------------------------------------------------------------
+# Pydantic Tool Input Schemas
+# ---------------------------------------------------------------------------
+
+class CheckPaymentInput(BaseModel):
+    transaction_id: str = Field(..., min_length=1, max_length=100, description="Unique transaction identifier")
+
+
+class CustomerHistoryInput(BaseModel):
+    customer_id: str = Field(..., min_length=1, max_length=100, description="Unique customer identifier")
+
+
+class ScheduleRetryInput(BaseModel):
+    transaction_id: str = Field(..., min_length=1, max_length=100)
+    delay_hours: float = Field(default=6.0, ge=0.0, le=168.0, description="Delay before retry in hours (0 to 168h)")
+
+
+class SendNotificationInput(BaseModel):
+    transaction_id: str = Field(..., min_length=1, max_length=100)
+    customer_id: str = Field(..., min_length=1, max_length=100)
+    message: str = Field(..., min_length=1, max_length=2000)
+
+
+class CreateEscalationInput(BaseModel):
+    transaction_id: str = Field(..., min_length=1, max_length=100)
+    reason: str = Field(..., min_length=1, max_length=1000)
+    priority: str = Field(default="normal", pattern="^(low|normal|high|critical)$")
+
+
+class PaymentUpdateInput(BaseModel):
+    transaction_id: str = Field(..., min_length=1, max_length=100)
+    customer_id: str = Field(..., min_length=1, max_length=100)
+
+
+class AlternativePaymentInput(BaseModel):
+    transaction_id: str = Field(..., min_length=1, max_length=100)
+    customer_id: str = Field(..., min_length=1, max_length=100)
+
+
+class LogDecisionInput(BaseModel):
+    decision_data: Dict[str, Any]
+
+
+# ---------------------------------------------------------------------------
+# Pydantic Tool Output Schemas
+# ---------------------------------------------------------------------------
+
+class CheckPaymentOutput(BaseModel):
+    found: bool
+    transaction_id: Optional[str] = None
+    customer_id: Optional[str] = None
+    amount: Optional[float] = None
+    payment_method: Optional[str] = None
+    failure_reason: Optional[str] = None
+    retry_count: Optional[int] = None
+    recovered: Optional[bool] = None
+    time_since_failure_hours: Optional[float] = None
+    recovery_probability: Optional[float] = None
+    expected_recovery_value: Optional[float] = None
+    error: Optional[str] = None
+
+
+class CustomerHistoryOutput(BaseModel):
+    found: bool
+    customer_id: Optional[str] = None
+    tenure_days: Optional[int] = None
+    subscription_type: Optional[str] = None
+    industry: Optional[str] = None
+    customer_ltv: Optional[float] = None
+    historical_recovery_rate: Optional[float] = None
+    total_transactions: Optional[int] = None
+    recovered_transactions: Optional[int] = None
+    customer_recovery_rate: Optional[float] = None
+    error: Optional[str] = None
+
+
+class ScheduleRetryOutput(BaseModel):
+    success: bool
+    attempt_id: Optional[int] = None
+    scheduled_at: Optional[str] = None
+    delay_hours: Optional[float] = None
+    message: Optional[str] = None
+    error: Optional[str] = None
+
+
+class SendNotificationOutput(BaseModel):
+    success: bool
+    attempt_id: Optional[int] = None
+    notification_sent: Optional[bool] = None
+    customer_id: Optional[str] = None
+    channel: Optional[str] = None
+    message_preview: Optional[str] = None
+    error: Optional[str] = None
+
+
+class CreateEscalationOutput(BaseModel):
+    success: bool
+    attempt_id: Optional[int] = None
+    escalation_created: Optional[bool] = None
+    priority: Optional[str] = None
+    reason: Optional[str] = None
+    ticket_id: Optional[str] = None
+    error: Optional[str] = None
 
 
 def _utc_now() -> datetime:
@@ -538,3 +645,96 @@ class AgentTools:
                 "parameters": {"decision_data": "dict"},
             },
         ]
+
+    def validate_and_execute(
+        self,
+        tool_name: str,
+        raw_arguments: Dict[str, Any],
+        timeout_seconds: Optional[float] = 10.0,
+    ) -> Dict[str, Any]:
+        """
+        Validate tool arguments using strict Pydantic schemas before execution.
+        Safely captures invalid inputs, missing fields, or malformed data without crashing the agent.
+        Supports bounded timeout execution to prevent hung operations.
+        """
+        schema_map = {
+            "check_payment": CheckPaymentInput,
+            "get_customer_history": CustomerHistoryInput,
+            "schedule_retry": ScheduleRetryInput,
+            "send_notification": SendNotificationInput,
+            "create_escalation": CreateEscalationInput,
+            "request_payment_update": PaymentUpdateInput,
+            "offer_alternative_payment": AlternativePaymentInput,
+            "log_decision": LogDecisionInput,
+        }
+
+        schema = schema_map.get(tool_name)
+        if not schema:
+            err_msg = f"Unknown tool: '{tool_name}'"
+            self._log(tool_name, raw_arguments, {"success": False, "error": err_msg})
+            return {"success": False, "error": err_msg}
+
+        try:
+            validated = schema.model_validate(raw_arguments)
+        except ValidationError as e:
+            err_msg = f"Tool input validation error for '{tool_name}': {e.errors()}"
+            self._log(tool_name, raw_arguments, {"success": False, "error": err_msg, "validation_failed": True})
+            return {
+                "success": False,
+                "error": err_msg,
+                "validation_failed": True,
+                "details": [
+                    {"loc": err["loc"], "msg": err["msg"], "type": err["type"]}
+                    for err in e.errors()
+                ],
+            }
+
+        val_dict = validated.model_dump()
+
+        def _dispatch() -> Dict[str, Any]:
+            if tool_name == "check_payment":
+                return self.check_payment(val_dict["transaction_id"])
+            elif tool_name == "get_customer_history":
+                return self.get_customer_history(val_dict["customer_id"])
+            elif tool_name == "schedule_retry":
+                return self.schedule_retry(val_dict["transaction_id"], val_dict.get("delay_hours", 6.0))
+            elif tool_name == "send_notification":
+                return self.send_notification(val_dict["transaction_id"], val_dict["customer_id"], val_dict["message"])
+            elif tool_name == "create_escalation":
+                return self.create_escalation(val_dict["transaction_id"], val_dict["reason"], val_dict.get("priority", "normal"))
+            elif tool_name == "request_payment_update":
+                return self.request_payment_update(val_dict["transaction_id"], val_dict["customer_id"])
+            elif tool_name == "offer_alternative_payment":
+                return self.offer_alternative_payment(val_dict["transaction_id"], val_dict["customer_id"])
+            elif tool_name == "log_decision":
+                return self.log_decision(val_dict["decision_data"])
+            else:
+                return {"success": False, "error": f"Tool '{tool_name}' execution dispatcher not implemented."}
+
+        # Dispatch with optional timeout boundary
+        if timeout_seconds and timeout_seconds > 0:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(_dispatch)
+                try:
+                    return future.result(timeout=timeout_seconds)
+                except concurrent.futures.TimeoutError:
+                    err_res = {
+                        "success": False,
+                        "error": f"Tool '{tool_name}' timed out after {timeout_seconds:.1f} seconds",
+                        "timeout": True,
+                    }
+                    self._log(tool_name, raw_arguments, err_res)
+                    return err_res
+                except Exception as exc:
+                    err_res = {"success": False, "error": f"Tool execution failed: {str(exc)}", "failure": True}
+                    self._log(tool_name, raw_arguments, err_res)
+                    return err_res
+        else:
+            try:
+                return _dispatch()
+            except Exception as exc:
+                err_res = {"success": False, "error": f"Tool execution failed: {str(exc)}", "failure": True}
+                self._log(tool_name, raw_arguments, err_res)
+                return err_res
+
+

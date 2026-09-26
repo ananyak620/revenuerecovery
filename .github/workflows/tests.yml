@@ -1,0 +1,51 @@
+name: CI / Agent Tests
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    name: Lint, Test & Fast Eval
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          pip install ruff pyright pytest-cov
+
+      - name: Lint with Ruff
+        run: |
+          ruff check src/ tests/ evals/
+
+      - name: Type Check with Pyright
+        run: |
+          pyright src/
+
+      - name: Fast Test Suite (Unit, Integration, Tools, RAG, Safety)
+        run: |
+          pytest -v --cov=src --cov-report=xml
+
+      - name: Fast RAG Evaluation Verification
+        run: |
+          python -m src.ai.rag.evaluate
+
+      - name: Validate Container Build
+        run: |
+          docker build -t reviveai:test .

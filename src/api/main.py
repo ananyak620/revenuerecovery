@@ -9,67 +9,87 @@ Usage:
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from pathlib import Path
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 from src.config import settings
-from src.db.session import init_db
-from src.api.routes import transactions, recovery, dashboard, webhooks
+from fastapi import Depends
+from sqlalchemy.orm import Session
+from src.db.session import init_db, get_db
+from src.api.routes import transactions, recovery, dashboard, webhooks, agent
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
-    # --- Startup ---
     print("\n⚡ ReviveAI API starting up...")
     init_db()
     print("✓ Database initialized")
     print(f"✓ Environment: {settings.app_env}")
-    print(f"✓ LLM Provider: {settings.llm_provider} (model: {settings.llm_model})")
+    print(f"✓ OpenAI Model: {settings.openai_model}")
     print(f"✓ API ready at http://{settings.api_host}:{settings.api_port}")
     print()
-
     yield
-
-    # --- Shutdown ---
     print("\n⚡ ReviveAI API shutting down...")
 
 
 app = FastAPI(
     title="ReviveAI API",
     description=(
-        "AI/ML-powered Revenue Recovery Agent API. "
-        "Predicts recovery probability, diagnoses payment failures, "
-        "and executes bounded recovery workflows."
+        "AI/ML-powered Revenue Recovery Agent API with LangChain tool-calling, "
+        "OpenAI API integration, Scikit-learn ML scoring, and payment pipeline analytics."
     ),
-    version="0.1.0",
+    version="0.2.0",
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
 )
 
-# CORS — allow frontend (Phase 8)
+# CORS — allow Vite dev server (:5173), frontend (:3000), and all origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # tighten in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-from pathlib import Path
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
 
+app.include_router(agent.router)
 app.include_router(transactions.router)
 app.include_router(recovery.router)
 app.include_router(dashboard.router)
 app.include_router(webhooks.router)
+
+
+@app.get("/metrics", tags=["metrics"])
+@app.get("/api/metrics", tags=["metrics"])
+def get_pipeline_metrics(db: Session = Depends(get_db)):
+    """Pipeline health and recovery stats."""
+    from src.api.routes.dashboard import get_dashboard_stats
+    return get_dashboard_stats(db=db)
+
+
+@app.get("/transactions/{transaction_id}", tags=["transactions"])
+def get_transaction_by_id(transaction_id: str, db: Session = Depends(get_db)):
+    """Transaction detail + ML risk tier."""
+    return transactions.get_transaction(transaction_id=transaction_id, db=db)
+
+
+@app.get("/transactions", tags=["transactions"])
+def list_transactions_alias(
+    page: int = 1,
+    page_size: int = 50,
+    db: Session = Depends(get_db),
+):
+    """List transactions alias."""
+    return transactions.list_transactions(page=page, page_size=page_size, db=db)
 
 
 @app.get("/health", tags=["health"])
@@ -78,7 +98,7 @@ async def health_check():
     from src.api.schemas import HealthCheck
     return HealthCheck(
         environment=settings.app_env,
-        llm_available=settings.has_gemini_key,
+        llm_available=bool(settings.openai_api_key or settings.has_gemini_key),
     )
 
 
@@ -95,21 +115,26 @@ for folder in ["pages", "components", "utils", "data"]:
 @app.get("/style.css")
 @app.head("/style.css")
 async def get_style():
-    return FileResponse(str(ROOT_DIR / "style.css"))
+    if (ROOT_DIR / "style.css").exists():
+        return FileResponse(str(ROOT_DIR / "style.css"))
+    return {"error": "not found"}
 
 @app.get("/app.js")
 @app.head("/app.js")
 async def get_app():
-    return FileResponse(str(ROOT_DIR / "app.js"))
+    if (ROOT_DIR / "app.js").exists():
+        return FileResponse(str(ROOT_DIR / "app.js"))
+    return {"error": "not found"}
 
 @app.get("/", tags=["root"])
 @app.head("/", tags=["root"])
 async def root():
+    """Serve the ReviveAI Galaxy UI with 6 cards, tables, and multi-agent workspace."""
     if INDEX_FILE.exists():
         return FileResponse(str(INDEX_FILE))
     return {
         "app": settings.app_name,
-        "version": "0.1.0",
+        "version": "0.2.0",
         "docs": "/docs",
         "status": "running",
     }

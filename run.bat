@@ -21,4 +21,5 @@ echo   ✓ ReviveAI is live!
 echo   - Frontend: http://localhost:3000
 echo   - Backend:  http://localhost:8000
 echo   - API Docs: http://localhost:8000/docs
+echo   - LangChain Agent: http://localhost:8000/agent/query
 echo ============================================================

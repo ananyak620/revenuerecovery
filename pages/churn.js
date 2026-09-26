@@ -36,10 +36,10 @@ const ChurnPage = (() => {
     if (!activeRetentionExecution) {
       const presets = AIService.getChurnPresets ? AIService.getChurnPresets() : {};
       const p = presets.critical_alpha || {
-        company: 'Alpha Corp',
+        company: 'Acme Corp (Drop in Usage)',
         mrr: 18500,
         riskScore: 94,
-        churnReason: 'Declining product usage (-58% over 30d), opened 7 support tickets'
+        churnReason: 'Customer logins fell 58% and 7 support tickets remain unresolved'
       };
 
       activeRetentionExecution = {
@@ -64,7 +64,7 @@ const ChurnPage = (() => {
           { name: 'Concierge Communicator', icon: '✍️', status: 'completed', time: '22ms', details: 'VIP Concierge Outreach Dispatched' }
         ],
         agent_trace: [
-          "[Detective] Ingesting real-time behavioral telemetry for Alpha Corp (MRR: ₹18,500, Risk: 94/100)...",
+          "[Detective] Ingesting real-time behavioral telemetry for Enterprise Client (MRR: ₹18,500, Risk: 94/100)...",
           "[Detective] Root-cause forensics: Declining product usage (-58% over 30d), opened 7 support tickets. Classification: CRITICAL CHURN THREAT.",
           "[Detective] Querying customer health score & NPS -> Feature adoption: 18%, Support tickets: 7, NPS: 2/10.",
           "[Strategist] Querying RAG Playbook Corpus -> Matched 'PB-PROACTIVE-ONBOARDING-RESCUE'.",
@@ -74,13 +74,13 @@ const ChurnPage = (() => {
           "[Strategist] Revised retention package: 15% discount + 1-on-1 Quarterly Architecture Review with Lead Success Engineer.",
           "[Auditor] ✅ Guardrail Audit Passed: 15% discount <= 20% cap. LTV margin preserved.",
           "[HITL Gate] Cleared for autonomous concierge dispatch.",
-          "[Communicator] Generated personalized retention concierge draft & dynamic calendar booking link: https://reviveai.io/concierge/alpha_corp?tok=9a4c1",
+          "[Communicator] Generated personalized retention concierge draft & dynamic calendar booking link: https://reviveai.io/concierge/enterprise_client?tok=9a4c1",
           "[Communicator] Channel selected: EXECUTIVE EMAIL + WHATSAPP. Delivered to account decision maker."
         ],
         outreach: {
           channel: 'Executive Email + WhatsApp',
           headline: 'Dedicated Technical Advisory Session',
-          magic_link: 'https://reviveai.io/concierge/alpha_corp?tok=9a4c1'
+          magic_link: 'https://reviveai.io/concierge/enterprise_client?tok=9a4c1'
         }
       };
     }

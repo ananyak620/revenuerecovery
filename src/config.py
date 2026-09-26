@@ -52,6 +52,7 @@ class Settings(BaseSettings):
     llm_base_url: str = ""
     gemini_api_key: str = ""
     openai_api_key: str = ""
+    openai_model: str = "gpt-4o-mini"
     ollama_base_url: str = "http://localhost:11434"
 
     # --- Webhooks & Event Ingestion ---
@@ -63,9 +64,19 @@ class Settings(BaseSettings):
     # --- Redis (Phase 7+) ---
     redis_url: str = "redis://localhost:6379/0"
 
-    # --- API ---
+    # --- API & CORS ---
     api_host: str = "0.0.0.0"
     api_port: int = 8000
+    cors_origins: list[str] = ["*"]
+
+    # --- RAG Subsystem ---
+    rag_chunk_size: int = 300
+    rag_chunk_overlap: int = 50
+    rag_top_k: int = 3
+
+    # --- AWS Cloud Settings ---
+    aws_region: str = "us-east-1"
+    aws_secret_name: str = "reviveai/production/secrets"
 
     @property
     def is_development(self) -> bool:

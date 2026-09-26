@@ -57,6 +57,8 @@ class TransactionResponse(TransactionBase):
     recovered: bool = False
     recovery_probability: Optional[float] = None
     expected_recovery_value: Optional[float] = None
+    risk_tier: Optional[str] = None
+    recommended_action: Optional[str] = None
     created_at: Optional[datetime] = None
 
 

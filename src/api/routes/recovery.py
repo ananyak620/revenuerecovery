@@ -75,66 +75,44 @@ def get_recovery_queue(
     )
 
 
+from src.ml.predict import get_predictor
+
+
 @router.get("/predict/{transaction_id}", response_model=RecoveryPredictionResponse)
 def predict_recovery(transaction_id: str, db: Session = Depends(get_db)):
     """
-    Predict recovery probability for a specific transaction.
-
-    Phase 2: Returns placeholder prediction.
-    Phase 3: Will use the trained XGBoost model.
+    Predict recovery probability for a specific transaction using calibrated XGBoost model.
     """
     txn_record = db.query(Transaction).filter(Transaction.id == transaction_id).first()
     if not txn_record:
         raise HTTPException(status_code=404, detail=f"Transaction {transaction_id} not found")
     txn: Any = txn_record
 
-    # --- Placeholder prediction logic (replaced by ML model in Phase 3) ---
-    # Simple heuristic based on key features
-    prob: float = 0.5
-
-    # Retry count effect
-    prob -= int(txn.retry_count) * 0.1
-
-    # Failure reason effect
-    reason_effects = {
-        "authentication_failure": 0.15,
-        "network_error": 0.12,
-        "technical_error": 0.08,
-        "insufficient_funds": -0.05,
-        "limit_exceeded": -0.08,
-        "card_expired": -0.15,
-        "bank_declined": -0.20,
-        "fraud_flag": -0.35,
-    }
     failure_str = str(txn.failure_reason.value if hasattr(txn.failure_reason, 'value') else txn.failure_reason)
-    prob += reason_effects.get(failure_str, 0.0)
+    pm_str = str(txn.payment_method.value if hasattr(txn.payment_method, 'value') else txn.payment_method)
 
-    # Clamp
-    prob = max(0.05, min(0.95, prob))
+    features = {
+        "transaction_id": str(txn.id),
+        "amount": float(txn.amount),
+        "payment_method": pm_str,
+        "failure_reason": failure_str,
+        "retry_count": int(txn.retry_count),
+        "time_since_failure_hours": float(txn.time_since_failure_hours or 0.0),
+        "hour_of_day": int(txn.hour_of_day or 0),
+        "day_of_week": int(txn.day_of_week or 0),
+        "is_weekend": int(bool(txn.is_weekend)),
+    }
 
-    # Risk level
-    if prob >= 0.7:
-        risk_level = "low"
-        action = "retry"
-    elif prob >= 0.4:
-        risk_level = "medium"
-        action = "notify_customer"
-    elif prob >= 0.2:
-        risk_level = "high"
-        action = "escalate"
-    else:
-        risk_level = "critical"
-        action = "no_action"
-
-    erv = round(float(txn.amount) * prob, 2)
+    predictor = get_predictor()
+    pred = predictor.predict(features)
 
     return RecoveryPredictionResponse(
         transaction_id=str(txn.id),
-        recovery_probability=round(prob, 4),
-        expected_recovery_value=erv,
-        risk_level=risk_level,
-        recommended_action=action,
-        confidence=0.3,  # low confidence until ML model is trained
+        recovery_probability=round(float(pred.get("recovery_probability", 0.5)), 4),
+        expected_recovery_value=round(float(pred.get("expected_recovery_value", 0.0)), 2),
+        risk_level=str(pred.get("risk_level", "medium")),
+        recommended_action=str(pred.get("recommended_action", "retry")),
+        confidence=float(pred.get("confidence", 0.85)),
     )
 
 
@@ -198,12 +176,15 @@ def get_escalated_queue(db: Session = Depends(get_db)):
     Retrieve Human-in-the-Loop (HITL) review queue.
     Lists high-value or policy-blocked transactions requiring human review.
     """
-    from src.db.models import RecoveryDecision, Escalation, EscalationStatus
+    from src.db.models import RecoveryAttempt, RecoveryAction, RecoveryStatus
 
     escalations = (
-        db.query(Escalation)
-        .filter(Escalation.status == EscalationStatus.OPEN)
-        .order_by(Escalation.created_at.desc())
+        db.query(RecoveryAttempt)
+        .filter(
+            (RecoveryAttempt.action == RecoveryAction.ESCALATE)
+            | (RecoveryAttempt.status == RecoveryStatus.ESCALATED)
+        )
+        .order_by(RecoveryAttempt.created_at.desc())
         .limit(20)
         .all()
     )
@@ -217,8 +198,8 @@ def get_escalated_queue(db: Session = Depends(get_db)):
             "customer_id": txn.customer_id if txn else "unknown",
             "amount": float(txn.amount) if txn else 0.0,
             "failure_reason": str(txn.failure_reason.value if txn and hasattr(txn.failure_reason, 'value') else (txn.failure_reason if txn else 'unknown')),
-            "reason": esc.reason,
-            "priority": str(esc.priority.value if hasattr(esc.priority, 'value') else esc.priority),
+            "reason": esc.result_message or "Escalation pending review",
+            "priority": "high",
             "created_at": str(esc.created_at),
         })
 
@@ -226,6 +207,7 @@ def get_escalated_queue(db: Session = Depends(get_db)):
         "count": len(items),
         "escalations": items,
     }
+
 
 
 class OverrideRequest(BaseModel):

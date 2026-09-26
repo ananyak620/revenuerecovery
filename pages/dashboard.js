@@ -15,7 +15,6 @@ const DashboardPage = (() => {
     const isINR = Formatters.getCurrency() === 'INR';
     const sym = Formatters.getCurrencySymbol();
     const rate = isINR ? 1 : (1 / 83.5);
-
     const calcVol = vol * rate;
     const calcAov = Math.max(10, orderVal * rate);
     const monthlySaved = calcVol * 0.742;
@@ -252,7 +251,7 @@ const DashboardPage = (() => {
     });
 
     const agentEvents = [
-      { agent: '🕵️ [Detective]', text: 'Diagnosed transient UPI PSP timeout for <strong style="color: #fff;">Alpha Corp</strong> (₹4,999)', type: 'info', time: '2m ago' },
+      { agent: '🕵️ [Detective]', text: 'Diagnosed transient UPI PSP timeout for <strong style="color: #fff;">Enterprise Account</strong> (₹4,999)', type: 'info', time: '2m ago' },
       { agent: '🧠 [Strategist]', text: 'Matched <code style="color: #c4b5fd;">PB-TECH-TIMEOUT</code> ➔ Scheduled +2.0h smart off-peak retry window', type: 'primary', time: '5m ago' },
       { agent: '⚖️ [Auditor Loop]', text: 'Self-corrected price churn discount: 25% ➔ compliant 15% ceiling (<strong style="color: #34d399;">POL-07 Passed</strong>)', type: 'success', time: '9m ago' },
       { agent: '✍️ [Communicator]', text: 'Dispatched dynamic 1-Click WhatsApp Magic Link to <strong style="color: #fff;">James Chen</strong>', type: 'success', time: '14m ago' },

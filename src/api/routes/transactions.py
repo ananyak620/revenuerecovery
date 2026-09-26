@@ -17,6 +17,50 @@ from src.api.schemas import TransactionResponse, TransactionList
 router = APIRouter(prefix="/api/transactions", tags=["transactions"])
 
 
+from src.ml.predict import get_predictor
+
+
+def _enrich_transaction_response(txn: Transaction) -> TransactionResponse:
+    resp = TransactionResponse.model_validate(txn)
+    if resp.recovery_probability is not None and not resp.risk_tier:
+        prob = resp.recovery_probability
+        if int(txn.retry_count or 0) >= 5:
+            resp.risk_tier = "Critical"
+            resp.recommended_action = "no_action"
+        elif prob >= 0.7:
+            resp.risk_tier = "Low"
+            resp.recommended_action = "retry"
+        elif prob >= 0.4:
+            resp.risk_tier = "Medium"
+            resp.recommended_action = "notify_customer"
+        elif prob >= 0.2:
+            resp.risk_tier = "High"
+            resp.recommended_action = "escalate"
+        else:
+            resp.risk_tier = "Critical"
+            resp.recommended_action = "no_action"
+    elif not resp.risk_tier:
+        try:
+            predictor = get_predictor()
+            pred = predictor.predict({
+                "transaction_id": txn.id,
+                "amount": txn.amount,
+                "payment_method": txn.payment_method.value if hasattr(txn.payment_method, "value") else str(txn.payment_method),
+                "failure_reason": txn.failure_reason.value if hasattr(txn.failure_reason, "value") else str(txn.failure_reason),
+                "retry_count": txn.retry_count,
+            })
+            resp.risk_tier = pred.get("risk_level", "medium").capitalize()
+            resp.recommended_action = pred.get("recommended_action")
+            if resp.recovery_probability is None:
+                resp.recovery_probability = pred.get("recovery_probability")
+            if resp.expected_recovery_value is None:
+                resp.expected_recovery_value = pred.get("expected_recovery_value")
+        except Exception:
+            resp.risk_tier = "Medium"
+            resp.recommended_action = "notify_customer"
+    return resp
+
+
 @router.get("/", response_model=TransactionList)
 def list_transactions(
     page: int = Query(1, ge=1),
@@ -51,8 +95,16 @@ def list_transactions(
     total = query.count()
 
     # Sort
-    sort_col = getattr(Transaction, sort_by)
-    query = query.order_by(sort_col.desc() if sort_order == "desc" else sort_col.asc())
+    actual_sort_by = sort_by.default if hasattr(sort_by, "default") else sort_by
+    if not isinstance(actual_sort_by, str):
+        actual_sort_by = "amount"
+
+    actual_sort_order = sort_order.default if hasattr(sort_order, "default") else sort_order
+    if not isinstance(actual_sort_order, str):
+        actual_sort_order = "desc"
+
+    sort_col = getattr(Transaction, actual_sort_by, Transaction.amount)
+    query = query.order_by(sort_col.desc() if actual_sort_order == "desc" else sort_col.asc())
 
     # Paginate
     offset = (page - 1) * page_size
@@ -60,7 +112,7 @@ def list_transactions(
 
     return TransactionList(
         total=total,
-        items=[TransactionResponse.model_validate(t) for t in items],
+        items=[_enrich_transaction_response(t) for t in items],
         page=page,
         page_size=page_size,
     )
@@ -104,14 +156,14 @@ def get_customer_transactions(
     txns = db.query(Transaction).filter(Transaction.customer_id == customer_id).all()
     return TransactionList(
         total=len(txns),
-        items=[TransactionResponse.model_validate(t) for t in txns],
+        items=[_enrich_transaction_response(t) for t in txns],
     )
 
 
 @router.get("/{transaction_id}", response_model=TransactionResponse)
 def get_transaction(transaction_id: str, db: Session = Depends(get_db)):
-    """Get a single transaction by ID."""
+    """Get a single transaction by ID with risk tier."""
     txn = db.query(Transaction).filter(Transaction.id == transaction_id).first()
     if not txn:
         raise HTTPException(status_code=404, detail=f"Transaction {transaction_id} not found")
-    return TransactionResponse.model_validate(txn)
+    return _enrich_transaction_response(txn)
